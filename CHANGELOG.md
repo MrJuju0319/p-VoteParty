@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.3
+
+- Correction startup warning `language.yml already exists`:
+  - vérification explicite de l'existence du fichier avant `saveResource("language.yml", false)`
+- Mise à jour de `paper-plugin.yml` version `1.4.3`.
+- Mise à jour README avec section dépannage runtime Paper:
+  - warning `language.yml already exists`
+  - warning `Loading Paper plugin in the legacy plugin loading logic`
+
 ## 1.4.2
 
 - Correction critique Paper plugin command system:

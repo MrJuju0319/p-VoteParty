@@ -235,3 +235,27 @@ Si vous avez un souci plugin Gradle, vous pouvez temporairement lancer :
 ```bash
 gradle clean build --no-configuration-cache
 ```
+
+
+---
+
+## 13) Dépannage runtime (Paper)
+
+### Warning `Could not save language.yml ... already exists`
+
+Corrigé en `1.4.3`: le plugin vérifie maintenant l'existence de `language.yml` avant `saveResource`, donc ce warning ne doit plus apparaître au redémarrage.
+
+### Warning `Loading Paper plugin in the legacy plugin loading logic`
+
+Ce warning vient généralement de la configuration serveur (mode legacy activé), pas du code métier du plugin.
+
+Vérifiez la configuration Paper pour désactiver le legacy plugin loading et utilisez le mode Paper plugins moderne.
+
+Le plugin est fourni avec:
+
+- `paper-plugin.yml`
+- `bootstrapper`
+- `loader`
+- enregistrement de commande runtime (pas de `commands` YAML)
+
+ce qui correspond au modèle recommandé Paper plugin.

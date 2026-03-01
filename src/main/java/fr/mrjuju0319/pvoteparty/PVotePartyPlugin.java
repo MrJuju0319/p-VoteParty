@@ -8,6 +8,7 @@ import fr.mrjuju0319.pvoteparty.vote.VoteConfig;
 import fr.mrjuju0319.pvoteparty.vote.VoteService;
 import fr.mrjuju0319.pvoteparty.vote.VoteStorage;
 import fr.mrjuju0319.pvoteparty.vote.YamlVoteStorage;
+import java.io.File;
 import java.lang.reflect.Method;
 import org.bukkit.command.Command;
 import org.bukkit.event.EventHandler;
@@ -23,7 +24,10 @@ public final class PVotePartyPlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        saveResource("language.yml", false);
+        File languageFile = new File(getDataFolder(), "language.yml");
+        if (!languageFile.exists()) {
+            saveResource("language.yml", false);
+        }
 
         VoteConfig voteConfig = VoteConfig.fromConfig(getConfig());
         VoteStorage storage = createStorage(voteConfig);

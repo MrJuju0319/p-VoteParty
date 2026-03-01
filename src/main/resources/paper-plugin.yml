@@ -1,5 +1,5 @@
 name: p-voteparty
-version: '1.4.2'
+version: '1.4.3'
 main: fr.mrjuju0319.pvoteparty.PVotePartyPlugin
 description: Vote-party cross-serveur optimise Paper/Folia avec storage YML/MySQL
 api-version: '1.21.8'
