@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.5.0
+
+- Ajout de l'intégration **p-core** (managed mode) via `PcoreApi` détecté dynamiquement.
+- Nouveau backend `PcoreVoteStorage` utilisant `DbService` de p-core pour centraliser l'accès data (sans pool local dans p-voteparty).
+- Nouveau support `storage.type`:
+  - `pcore`
+  - `managed`
+  - `auto` (try p-core puis fallback)
+- Mise à jour `paper-plugin.yml`:
+  - dépendance serveur optionnelle `p-core` (`required: false`, `join-classpath: true`)
+  - version plugin `1.5.0`
+- Mise à jour `config.yml` pour documenter `storage.type: yml | mysql | pcore | auto`.
+- Mise à jour README avec section complète d'intégration p-core (mode géré, fallback, bonnes pratiques).
+
 ## 1.4.3
 
 - Correction startup warning `language.yml already exists`:

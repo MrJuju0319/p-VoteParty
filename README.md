@@ -50,7 +50,7 @@ sync:
   interval-seconds: 5
 
 storage:
-  type: yml # yml ou mysql
+  type: yml # yml | mysql | pcore | auto
   mysql:
     host: 127.0.0.1
     port: 3306
@@ -259,3 +259,49 @@ Le plugin est fourni avec:
 - enregistrement de commande runtime (pas de `commands` YAML)
 
 ce qui correspond au modèle recommandé Paper plugin.
+
+
+---
+
+## 14) Intégration p-core (Managed mode)
+
+`p-voteparty` supporte maintenant **p-core** en mode géré (managed mode).
+
+### Principe
+
+- `storage.type: pcore` : force l'utilisation du hub data `p-core` (DbService partagé).
+- `storage.type: auto` : tente `p-core` d'abord, puis fallback `mysql`, puis `yml`.
+- `storage.type: mysql` : mode SQL local classique.
+- `storage.type: yml` : mode fichier local.
+
+### Prérequis managed mode
+
+- plugin `p-core` installé et actif
+- service Bukkit `dev.paracraft.pcore.api.PcoreApi` enregistré
+
+Si `p-core` n'est pas disponible:
+
+- en `pcore`/`managed` → warning + fallback mysql/yml
+- en `auto` → fallback silencieux mysql/yml
+
+### Ce que p-voteparty consomme via p-core
+
+- `DbService.execute(...)`
+- `DbService.query(...)`
+
+Données gérées (même modèle fonctionnel que MySQL local):
+
+- profils votes
+- progression vote-party
+- pending rewards
+- présence online
+- palliers
+- stats (jour/semaine/mois/année/total)
+- shared config (mode master/consumer)
+
+### Bonnes pratiques
+
+- en réseau multi-serveurs, privilégier `storage.type: pcore` ou `auto`
+- garder `server-name` unique par instance
+- conserver `master: true` sur un seul serveur si vous voulez une source de vérité pour les rewards
+

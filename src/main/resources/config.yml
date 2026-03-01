@@ -5,7 +5,7 @@ sync:
   interval-seconds: 5
 
 storage:
-  type: yml # yml ou mysql
+  type: yml # yml | mysql | pcore | auto
   mysql:
     host: 127.0.0.1
     port: 3306
