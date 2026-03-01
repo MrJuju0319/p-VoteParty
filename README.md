@@ -152,3 +152,45 @@ Identifiant: `p-voteparty`
 - `dependencies.server`
 
 pour coller au modèle Paper Plugin moderne.
+
+
+---
+
+
+## 9) Build / Toolchain Java 21 (important)
+
+Si vous avez l'erreur Gradle:
+
+- `Cannot find a Java installation ... matching languageVersion=21`
+- `Undefined Toolchain Download Repositories`
+
+Le projet est maintenant configuré pour télécharger automatiquement un JDK 21 via Gradle Toolchains (Foojay resolver).
+
+Fichiers concernés:
+
+- `settings.gradle` (plugin `org.gradle.toolchains.foojay-resolver-convention`)
+- `gradle.properties` (`org.gradle.java.installations.auto-download=true`)
+
+Commandes recommandées:
+
+```bash
+gradle --stop
+gradle clean build
+```
+
+Sur un environnement sans accès internet, installez manuellement Java 21 puis relancez le build.
+
+---
+
+## 10) Résumé rapide des variables
+
+- Variable commandes config: `{player}`
+- Placeholder pallier: `%p-voteparty_pallier_<X>%`
+- Placeholders vote: 
+  - `%p-voteparty_vote_party%`
+  - `%p-voteparty_vote_vote%`
+  - `%p-voteparty_vote_total%`
+  - `%p-voteparty_vote_day%`
+  - `%p-voteparty_vote_week%`
+  - `%p-voteparty_vote_month%`
+  - `%p-voteparty_vote_year%`

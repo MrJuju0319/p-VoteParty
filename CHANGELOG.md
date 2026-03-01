@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.1
+
+- Correction build Gradle Java 21:
+  - ajout du resolver toolchain Foojay dans `settings.gradle`
+  - ajout de `gradle.properties` avec auto-download de Java 21 toolchain
+- Mise à jour du README:
+  - ajout d'une section de dépannage build (`Undefined Toolchain Download Repositories`)
+  - ajout d'un résumé complet des variables/placeholders
+
 ## 1.3.0
 
 - Ajout d'un `paper-plugin.yml` aligné Paper plugins modernes:
