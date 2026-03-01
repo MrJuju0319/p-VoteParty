@@ -12,9 +12,21 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'io.papermc.paper:paper-api:1.20.6-R0.1-SNAPSHOT'
+    compileOnly 'io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT'
     compileOnly 'me.clip:placeholderapi:2.11.6'
-    implementation 'com.mysql:mysql-connector-j:8.4.0'
+
+    implementation('com.mysql:mysql-connector-j:8.4.0') {
+        because 'Storage MySQL requis pour p-voteparty'
+    }
+
+    constraints {
+        implementation('org.apache.commons:commons-lang3:3.18.0') {
+            because 'Force une version plus récente pour réduire le risque CVE sur versions 3.12.x'
+        }
+        implementation('com.google.protobuf:protobuf-java:3.25.8') {
+            because 'Force une version plus récente pour réduire le risque CVE sur versions 3.25.1'
+        }
+    }
 }
 
 java {

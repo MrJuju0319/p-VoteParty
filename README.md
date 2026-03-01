@@ -2,6 +2,8 @@
 
 Plugin **Paper/Folia** de vote-party cross-serveur, développé par **MrJuJu0319**.
 
+**Version Minecraft cible : 1.21.8 et +**.
+
 > Le plugin est déclaré avec **paper-plugin.yml** (Paper plugin) et utilise les API natives Paper/Folia (scheduler global Folia + fallback Paper/Bukkit).
 
 ---
@@ -194,3 +196,16 @@ Sur un environnement sans accès internet, installez manuellement Java 21 puis r
   - `%p-voteparty_vote_week%`
   - `%p-voteparty_vote_month%`
   - `%p-voteparty_vote_year%`
+
+
+---
+
+## 11) Compatibilité 1.21.8+ et sécurité dépendances
+
+- API Paper utilisée : `1.21.8-R0.1-SNAPSHOT`.
+- `paper-plugin.yml` utilise `api-version: 1.21.8`.
+- Le build Gradle applique des contraintes de versions pour limiter des dépendances transitives signalées vulnérables par certains scanners IDE:
+  - `org.apache.commons:commons-lang3:3.18.0`
+  - `com.google.protobuf:protobuf-java:3.25.8`
+
+Si votre scanner affiche encore un warning, faites un `gradle --refresh-dependencies` puis rescan du projet.

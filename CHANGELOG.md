@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0
+
+- Mise à jour compatibilité **Minecraft 1.21.8+**:
+  - `paper-api` -> `1.21.8-R0.1-SNAPSHOT`
+  - `paper-plugin.yml` -> `api-version: 1.21.8`
+- Durcissement des dépendances Gradle pour réduire les alertes sécurité sur dépendances transitives:
+  - contrainte `commons-lang3:3.18.0`
+  - contrainte `protobuf-java:3.25.8`
+- Mise à jour du README avec section compatibilité 1.21.8+ et notes sécurité dépendances.
+
 ## 1.3.1
 
 - Correction build Gradle Java 21:
