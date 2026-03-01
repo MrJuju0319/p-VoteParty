@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.1
+
+- Suppression de l'usage d'API Bukkit dépréciée dans `VoteService` (color/strip color), ce qui retire le warning de compilation "uses or overrides a deprecated API".
+- Optimisation build Gradle:
+  - activation `org.gradle.configuration-cache=true`
+  - activation `org.gradle.parallel=true`
+- Mise à jour README avec section dédiée à l'optimisation build et rappel de contournement (`--no-configuration-cache`).
+
 ## 1.4.0
 
 - Mise à jour compatibilité **Minecraft 1.21.8+**:

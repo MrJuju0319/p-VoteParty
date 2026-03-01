@@ -133,6 +133,7 @@ Identifiant: `p-voteparty`
 
 - Scheduler natif **Folia GlobalRegionScheduler** détecté automatiquement.
 - Fallback natif Paper/Bukkit si Folia indisponible.
+- Colorisation interne sans API Bukkit dépréciée (suppression du warning `deprecated API` dans `VoteService`).
 - Backend YML optimisé : cache mémoire + flush périodique (moins d'I/O disque).
 - Backend MySQL avec tables dédiées (profiles/state/pending/online/palliers/stats).
 - Dépendances Paper plugin déclarées dans `paper-plugin.yml` (`dependencies.server`).
@@ -209,3 +210,21 @@ Sur un environnement sans accès internet, installez manuellement Java 21 puis r
   - `com.google.protobuf:protobuf-java:3.25.8`
 
 Si votre scanner affiche encore un warning, faites un `gradle --refresh-dependencies` puis rescan du projet.
+
+
+---
+
+## 12) Optimisations build Gradle
+
+Le projet active maintenant :
+
+- `org.gradle.configuration-cache=true`
+- `org.gradle.parallel=true`
+
+Cela réduit le temps de build local (particulièrement sous IntelliJ).
+
+Si vous avez un souci plugin Gradle, vous pouvez temporairement lancer :
+
+```bash
+gradle clean build --no-configuration-cache
+```

@@ -2,7 +2,6 @@ package fr.mrjuju0319.pvoteparty.vote;
 
 import java.util.List;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -87,7 +86,7 @@ public class VoteService {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("{player}", online.getName()));
         }
         if (!anyOnline) {
-            plugin.getLogger().warning(ChatColor.stripColor(color(noOnlinePlayersMessage)));
+            plugin.getLogger().warning(stripLegacyColors(color(noOnlinePlayersMessage)));
         }
     }
 
@@ -155,7 +154,11 @@ public class VoteService {
     }
 
     public String color(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
+        return message == null ? "" : message.replace('&', '§');
+    }
+
+    private String stripLegacyColors(String input) {
+        return input == null ? "" : input.replaceAll("(?i)§[0-9A-FK-ORX]", "");
     }
 
     public void tickSync(boolean pullSharedConfig) {
