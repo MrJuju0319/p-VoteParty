@@ -9,9 +9,9 @@ public class VoteService {
 
     private final JavaPlugin plugin;
     private final VoteStorage storage;
-    private final String serverName;
-    private final String noOnlinePlayersMessage;
-    private final boolean master;
+    private String serverName;
+    private String noOnlinePlayersMessage;
+    private boolean master;
 
     private int votePartyGoal;
     private List<String> voteRewards;
@@ -46,6 +46,21 @@ public class VoteService {
         }
         if (!shared.partyRewards().isEmpty()) {
             partyRewards = shared.partyRewards();
+        }
+    }
+
+    public void reloadFromConfig(VoteConfig config) {
+        this.serverName = config.serverName();
+        this.noOnlinePlayersMessage = config.noOnlinePlayersMessage();
+        this.master = config.master();
+        this.votePartyGoal = config.votePartyGoal();
+        this.voteRewards = config.voteRewards();
+        this.partyRewards = config.partyRewards();
+
+        if (master) {
+            storage.upsertSharedConfig(config);
+        } else {
+            applySharedConfig();
         }
     }
 

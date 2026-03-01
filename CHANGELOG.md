@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.1
+
+- Ajout de la commande `/vp reload` (admin) pour recharger `config.yml` à chaud.
+- Rechargement runtime appliqué dans `VoteService.reloadFromConfig(...)` (goal/rewards/master/messages) sans redémarrage.
+- Mise à jour de `VpDynamicCommand` / `VoteCommand` pour supporter `reload` et tab-complete associé.
+- Mise à jour README (commande reload + limites de reload pour `storage.type`).
+
 ## 1.5.0
 
 - Ajout de l'intégration **p-core** (managed mode) via `PcoreApi` détecté dynamiquement.

@@ -90,7 +90,7 @@ public final class PVotePartyPlugin extends JavaPlugin implements Listener {
             Method getCommandMap = getServer().getClass().getMethod("getCommandMap");
             Object commandMap = getCommandMap.invoke(getServer());
             Method register = commandMap.getClass().getMethod("register", String.class, Command.class);
-            register.invoke(commandMap, getName(), new VpDynamicCommand(voteService));
+            register.invoke(commandMap, getName(), new VpDynamicCommand(this, voteService));
         } catch (Exception exception) {
             throw new IllegalStateException("Impossible d'enregistrer la commande /vp dynamiquement", exception);
         }

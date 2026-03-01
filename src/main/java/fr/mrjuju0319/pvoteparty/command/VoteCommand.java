@@ -1,5 +1,7 @@
 package fr.mrjuju0319.pvoteparty.command;
 
+import fr.mrjuju0319.pvoteparty.PVotePartyPlugin;
+import fr.mrjuju0319.pvoteparty.vote.VoteConfig;
 import fr.mrjuju0319.pvoteparty.vote.VoteService;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +13,11 @@ import org.bukkit.entity.Player;
 
 public class VoteCommand implements CommandExecutor, TabCompleter {
 
+    private final PVotePartyPlugin plugin;
     private final VoteService voteService;
 
-    public VoteCommand(VoteService voteService) {
+    public VoteCommand(PVotePartyPlugin plugin, VoteService voteService) {
+        this.plugin = plugin;
         this.voteService = voteService;
     }
 
@@ -31,6 +35,14 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
 
         if (!sender.hasPermission("p-voteparty.vote.admin")) {
             sender.sendMessage(voteService.color("&cTu n'as pas la permission."));
+            return true;
+        }
+
+        if (args[0].equalsIgnoreCase("reload")) {
+            plugin.reloadConfig();
+            VoteConfig updated = VoteConfig.fromConfig(plugin.getConfig());
+            voteService.reloadFromConfig(updated);
+            sender.sendMessage(voteService.color("&aConfiguration rechargee avec succes."));
             return true;
         }
 
@@ -72,7 +84,7 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        sender.sendMessage(voteService.color("&eUsage: /vp [add vote <nombre> <joueur>|setpallier <pallier> <true/false>|reset pallier <pallier/all>|party]"));
+        sender.sendMessage(voteService.color("&eUsage: /vp [reload|add vote <nombre> <joueur>|setpallier <pallier> <true/false>|reset pallier <pallier/all>|party]"));
         return true;
     }
 
@@ -80,6 +92,7 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> completions = new ArrayList<>();
         if (args.length == 1) {
+            completions.add("reload");
             completions.add("add");
             completions.add("party");
             completions.add("setpallier");

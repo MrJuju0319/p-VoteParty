@@ -1,5 +1,6 @@
 package fr.mrjuju0319.pvoteparty.command;
 
+import fr.mrjuju0319.pvoteparty.PVotePartyPlugin;
 import fr.mrjuju0319.pvoteparty.vote.VoteService;
 import java.util.Collections;
 import java.util.List;
@@ -10,9 +11,9 @@ public final class VpDynamicCommand extends Command {
 
     private final VoteCommand delegate;
 
-    public VpDynamicCommand(VoteService voteService) {
-        super("vp", "Gestion des votes et de la vote-party", "/vp [add vote <nombre> <joueur>|setpallier <pallier> <true/false>|reset pallier <pallier/all>|party]", Collections.singletonList("voteparty"));
-        this.delegate = new VoteCommand(voteService);
+    public VpDynamicCommand(PVotePartyPlugin plugin, VoteService voteService) {
+        super("vp", "Gestion des votes et de la vote-party", "/vp [reload|add vote <nombre> <joueur>|setpallier <pallier> <true/false>|reset pallier <pallier/all>|party]", Collections.singletonList("voteparty"));
+        this.delegate = new VoteCommand(plugin, voteService);
         setPermission("p-voteparty.vote.admin");
     }
 

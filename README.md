@@ -88,6 +88,10 @@ messages:
 
 ### Commandes admin (`p-voteparty.vote.admin`)
 
+- `/vp reload`
+  - Recharge `config.yml` à chaud (goal, rewards, party-rewards, mode master).
+  - Ne recrée pas le backend de stockage actif (si vous changez `storage.type`, redémarrez le serveur).
+
 - `/vp add vote <nombre> <joueur>`
   - Ajoute `<nombre>` votes au joueur.
   - Applique les rewards de vote.
