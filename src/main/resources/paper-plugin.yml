@@ -1,0 +1,26 @@
+name: p-voteparty
+version: '1.3.0'
+main: fr.mrjuju0319.pvoteparty.PVotePartyPlugin
+description: Vote-party cross-serveur optimise Paper/Folia avec storage YML/MySQL
+api-version: '1.20'
+author: MrJuJu0319
+website: https://github.com/MrJuJu0319
+bootstrapper: fr.mrjuju0319.pvoteparty.bootstrap.PVotePartyBootstrap
+loader: fr.mrjuju0319.pvoteparty.loader.PVotePartyLoader
+
+dependencies:
+  server:
+    PlaceholderAPI:
+      load: BEFORE
+      required: false
+      join-classpath: true
+
+commands:
+  vp:
+    description: Gestion des votes et de la vote-party
+    usage: /vp [add vote <nombre> <joueur>|setpallier <pallier> <true/false>|reset pallier <pallier/all>|party]
+
+permissions:
+  p-voteparty.vote.admin:
+    description: Permet d'ajouter des votes et gerer les paliers.
+    default: op

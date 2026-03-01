@@ -1,0 +1,5 @@
+prefix: "&6[VoteParty]&r "
+no-permission: "&cTu n'as pas la permission."
+player-only: "&cCommande reservee aux joueurs."
+vote-added: "&aVote ajoute pour &f{player}&a."
+party-triggered: "&aRewards de vote-party executes."
