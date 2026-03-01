@@ -154,7 +154,14 @@ Identifiant: `p-voteparty`
 - `loader`
 - `dependencies.server`
 
-pour coller au modèle Paper Plugin moderne.
+Le plugin **n'utilise plus** la section `commands` de `paper-plugin.yml` (non supportée en Paper plugin).
+La commande `/vp` est enregistrée dynamiquement au démarrage via le `CommandMap` (runtime registration), ce qui évite l'erreur:
+`You are trying to call JavaPlugin#getCommand on a Paper plugin during startup`.
+
+### Cyclic loading (important)
+
+Paper ne résout pas automatiquement les boucles de chargement.
+Si vous ajoutez des dépendances entre plugins, évitez les relations cycliques dans `dependencies.server`.
 
 
 ---

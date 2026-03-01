@@ -1,6 +1,6 @@
 package fr.mrjuju0319.pvoteparty;
 
-import fr.mrjuju0319.pvoteparty.command.VoteCommand;
+import fr.mrjuju0319.pvoteparty.command.VpDynamicCommand;
 import fr.mrjuju0319.pvoteparty.placeholder.UtilitiesPlaceholderExpansion;
 import fr.mrjuju0319.pvoteparty.scheduler.SchedulerAdapter;
 import fr.mrjuju0319.pvoteparty.vote.MysqlVoteStorage;
@@ -8,7 +8,8 @@ import fr.mrjuju0319.pvoteparty.vote.VoteConfig;
 import fr.mrjuju0319.pvoteparty.vote.VoteService;
 import fr.mrjuju0319.pvoteparty.vote.VoteStorage;
 import fr.mrjuju0319.pvoteparty.vote.YamlVoteStorage;
-import org.bukkit.command.PluginCommand;
+import java.lang.reflect.Method;
+import org.bukkit.command.Command;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -29,12 +30,7 @@ public final class PVotePartyPlugin extends JavaPlugin implements Listener {
         this.voteService = new VoteService(this, voteConfig, storage);
         voteService.initializeRuntimeConfig();
 
-        PluginCommand vpCommand = getCommand("vp");
-        if (vpCommand != null) {
-            VoteCommand executor = new VoteCommand(voteService);
-            vpCommand.setExecutor(executor);
-            vpCommand.setTabCompleter(executor);
-        }
+        registerVpCommand();
 
         getServer().getPluginManager().registerEvents(this, this);
 
@@ -53,6 +49,17 @@ public final class PVotePartyPlugin extends JavaPlugin implements Listener {
         }
         getLogger().info("Vote storage: YML");
         return new YamlVoteStorage(this);
+    }
+
+    private void registerVpCommand() {
+        try {
+            Method getCommandMap = getServer().getClass().getMethod("getCommandMap");
+            Object commandMap = getCommandMap.invoke(getServer());
+            Method register = commandMap.getClass().getMethod("register", String.class, Command.class);
+            register.invoke(commandMap, getName(), new VpDynamicCommand(voteService));
+        } catch (Exception exception) {
+            throw new IllegalStateException("Impossible d'enregistrer la commande /vp dynamiquement", exception);
+        }
     }
 
     @EventHandler

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.2
+
+- Correction critique Paper plugin command system:
+  - suppression de la section `commands` dans `paper-plugin.yml`
+  - arrêt de l'usage de `JavaPlugin#getCommand(...)` (non supporté pour Paper plugins)
+  - enregistrement dynamique de `/vp` via `CommandMap` au démarrage
+- Ajout de `VpDynamicCommand` pour relier exécution + tab-complete à `VoteCommand`.
+- Mise à jour README:
+  - clarification sur le système de commandes des Paper plugins
+  - ajout de notes sur les cycles de dépendances (`dependencies.server`).
+
 ## 1.4.1
 
 - Suppression de l'usage d'API Bukkit dépréciée dans `VoteService` (color/strip color), ce qui retire le warning de compilation "uses or overrides a deprecated API".

@@ -1,5 +1,5 @@
 name: p-voteparty
-version: '1.4.0'
+version: '1.4.2'
 main: fr.mrjuju0319.pvoteparty.PVotePartyPlugin
 description: Vote-party cross-serveur optimise Paper/Folia avec storage YML/MySQL
 api-version: '1.21.8'
@@ -14,11 +14,6 @@ dependencies:
       load: BEFORE
       required: false
       join-classpath: true
-
-commands:
-  vp:
-    description: Gestion des votes et de la vote-party
-    usage: /vp [add vote <nombre> <joueur>|setpallier <pallier> <true/false>|reset pallier <pallier/all>|party]
 
 permissions:
   p-voteparty.vote.admin:
