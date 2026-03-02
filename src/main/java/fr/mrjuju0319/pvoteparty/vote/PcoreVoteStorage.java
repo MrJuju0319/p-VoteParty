@@ -1,5 +1,6 @@
 package fr.mrjuju0319.pvoteparty.vote;
 
+import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Managed mode via p-core DbService.
  *
- * This implementation uses reflection to avoid a hard compile dependency on p-core API package names.
+ * Compatible avec result rows sous forme Map OU dev.paracraft.pcore.api.Row.
  */
 public class PcoreVoteStorage implements VoteStorage {
 
@@ -39,15 +40,53 @@ public class PcoreVoteStorage implements VoteStorage {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Map<String, Object>> query(String sql, List<Object> params) {
+    private List<Object> queryRows(String sql, List<Object> params) {
         try {
             Object dbService = pcoreApi.getClass().getMethod("db").invoke(pcoreApi);
             Object cf = dbService.getClass().getMethod("query", String.class, String.class, List.class)
                     .invoke(dbService, pluginId, sql, params);
-            return ((CompletableFuture<List<Map<String, Object>>>) cf).join();
+            Object result = ((CompletableFuture<Object>) cf).join();
+            if (result instanceof List<?> list) {
+                return (List<Object>) list;
+            }
+            return List.of();
         } catch (Exception e) {
             throw new IllegalStateException("p-core DbService query failed", e);
         }
+    }
+
+    private Object rowGet(Object row, String column) {
+        if (row == null) return null;
+
+        if (row instanceof Map<?, ?> map) {
+            for (Map.Entry<?, ?> e : map.entrySet()) {
+                if (e.getKey() != null && column.equalsIgnoreCase(String.valueOf(e.getKey()))) {
+                    return e.getValue();
+                }
+            }
+            return null;
+        }
+
+        try {
+            Method get = row.getClass().getMethod("get", String.class);
+            return get.invoke(row, column);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            Method asMap = row.getClass().getMethod("asMap");
+            Object raw = asMap.invoke(row);
+            if (raw instanceof Map<?, ?> map) {
+                for (Map.Entry<?, ?> e : map.entrySet()) {
+                    if (e.getKey() != null && column.equalsIgnoreCase(String.valueOf(e.getKey()))) {
+                        return e.getValue();
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        return null;
     }
 
     private void bootstrap() {
@@ -78,21 +117,21 @@ public class PcoreVoteStorage implements VoteStorage {
         String monthKey = now.getYear() + "-" + now.getMonthValue();
         String yearKey = String.valueOf(now.getYear());
 
-        List<Map<String, Object>> rows = query("SELECT day_count,week_count,month_count,year_count,total_count,day_key,week_key,month_key,year_key FROM vp_stats WHERE player_name=?", List.of(player));
+        List<Object> rows = queryRows("SELECT day_count,week_count,month_count,year_count,total_count,day_key,week_key,month_key,year_key FROM vp_stats WHERE player_name=?", List.of(player));
 
         int oldDay = 0, oldWeek = 0, oldMonth = 0, oldYear = 0, oldTotal = 0;
         String oldDayKey = dayKey, oldWeekKey = weekKey, oldMonthKey = monthKey, oldYearKey = yearKey;
         if (!rows.isEmpty()) {
-            Map<String, Object> r = rows.get(0);
-            oldDay = toInt(r.get("day_count"));
-            oldWeek = toInt(r.get("week_count"));
-            oldMonth = toInt(r.get("month_count"));
-            oldYear = toInt(r.get("year_count"));
-            oldTotal = toInt(r.get("total_count"));
-            oldDayKey = String.valueOf(r.get("day_key"));
-            oldWeekKey = String.valueOf(r.get("week_key"));
-            oldMonthKey = String.valueOf(r.get("month_key"));
-            oldYearKey = String.valueOf(r.get("year_key"));
+            Object r = rows.get(0);
+            oldDay = toInt(rowGet(r, "day_count"));
+            oldWeek = toInt(rowGet(r, "week_count"));
+            oldMonth = toInt(rowGet(r, "month_count"));
+            oldYear = toInt(rowGet(r, "year_count"));
+            oldTotal = toInt(rowGet(r, "total_count"));
+            oldDayKey = String.valueOf(rowGet(r, "day_key"));
+            oldWeekKey = String.valueOf(rowGet(r, "week_key"));
+            oldMonthKey = String.valueOf(rowGet(r, "month_key"));
+            oldYearKey = String.valueOf(rowGet(r, "year_key"));
         }
 
         int day = dayKey.equals(oldDayKey) ? oldDay : 0;
@@ -107,6 +146,7 @@ public class PcoreVoteStorage implements VoteStorage {
     }
 
     private int toInt(Object o) {
+        if (o == null) return 0;
         if (o instanceof Number n) return n.intValue();
         return Integer.parseInt(String.valueOf(o));
     }
@@ -120,8 +160,8 @@ public class PcoreVoteStorage implements VoteStorage {
 
     @Override
     public synchronized int getPartyProgress() {
-        List<Map<String, Object>> rows = query("SELECT v FROM vp_state WHERE k='party-progress'", List.of());
-        return rows.isEmpty() ? 0 : Integer.parseInt(String.valueOf(rows.get(0).get("v")));
+        List<Object> rows = queryRows("SELECT v FROM vp_state WHERE k='party-progress'", List.of());
+        return rows.isEmpty() ? 0 : Integer.parseInt(String.valueOf(rowGet(rows.get(0), "v")));
     }
 
     @Override
@@ -131,16 +171,16 @@ public class PcoreVoteStorage implements VoteStorage {
 
     @Override
     public synchronized int getVotes(String playerName) {
-        List<Map<String, Object>> rows = query("SELECT votes FROM vp_profiles WHERE player_name=?", List.of(key(playerName)));
-        return rows.isEmpty() ? 0 : toInt(rows.get(0).get("votes"));
+        List<Object> rows = queryRows("SELECT votes FROM vp_profiles WHERE player_name=?", List.of(key(playerName)));
+        return rows.isEmpty() ? 0 : toInt(rowGet(rows.get(0), "votes"));
     }
 
     @Override
     public synchronized VotePlayerStats getStats(String playerName) {
-        List<Map<String, Object>> rows = query("SELECT day_count,week_count,month_count,year_count,total_count FROM vp_stats WHERE player_name=?", List.of(key(playerName)));
+        List<Object> rows = queryRows("SELECT day_count,week_count,month_count,year_count,total_count FROM vp_stats WHERE player_name=?", List.of(key(playerName)));
         if (rows.isEmpty()) return VotePlayerStats.empty();
-        Map<String, Object> r = rows.get(0);
-        return new VotePlayerStats(toInt(r.get("day_count")), toInt(r.get("week_count")), toInt(r.get("month_count")), toInt(r.get("year_count")), toInt(r.get("total_count")));
+        Object r = rows.get(0);
+        return new VotePlayerStats(toInt(rowGet(r, "day_count")), toInt(rowGet(r, "week_count")), toInt(rowGet(r, "month_count")), toInt(rowGet(r, "year_count")), toInt(rowGet(r, "total_count")));
     }
 
     @Override
@@ -151,11 +191,11 @@ public class PcoreVoteStorage implements VoteStorage {
     @Override
     public synchronized List<String> popPendingRewards(String playerName) {
         String p = key(playerName);
-        List<Map<String, Object>> rows = query("SELECT id, command FROM vp_pending WHERE player_name=? ORDER BY id ASC", List.of(p));
+        List<Object> rows = queryRows("SELECT id, command FROM vp_pending WHERE player_name=? ORDER BY id ASC", List.of(p));
         List<String> out = new ArrayList<>();
-        for (Map<String, Object> row : rows) {
-            long id = Long.parseLong(String.valueOf(row.get("id")));
-            out.add(String.valueOf(row.get("command")));
+        for (Object row : rows) {
+            long id = Long.parseLong(String.valueOf(rowGet(row, "id")));
+            out.add(String.valueOf(rowGet(row, "command")));
             exec("DELETE FROM vp_pending WHERE id=?", List.of(id));
         }
         return out;
@@ -173,16 +213,16 @@ public class PcoreVoteStorage implements VoteStorage {
 
     @Override
     public synchronized String getOnlineServer(String playerName) {
-        List<Map<String, Object>> rows = query("SELECT server_name FROM vp_online WHERE player_name=?", List.of(key(playerName)));
-        return rows.isEmpty() ? null : String.valueOf(rows.get(0).get("server_name"));
+        List<Object> rows = queryRows("SELECT server_name FROM vp_online WHERE player_name=?", List.of(key(playerName)));
+        return rows.isEmpty() ? null : String.valueOf(rowGet(rows.get(0), "server_name"));
     }
 
     @Override
     public synchronized Map<String, Integer> topVotes(int limit) {
-        List<Map<String, Object>> rows = query("SELECT player_name, votes FROM vp_profiles ORDER BY votes DESC LIMIT ?", List.of(limit));
+        List<Object> rows = queryRows("SELECT player_name, votes FROM vp_profiles ORDER BY votes DESC LIMIT ?", List.of(limit));
         Map<String, Integer> out = new LinkedHashMap<>();
-        for (Map<String, Object> row : rows) {
-            out.put(String.valueOf(row.get("player_name")), toInt(row.get("votes")));
+        for (Object row : rows) {
+            out.put(String.valueOf(rowGet(row, "player_name")), toInt(rowGet(row, "votes")));
         }
         return out;
     }
@@ -194,8 +234,8 @@ public class PcoreVoteStorage implements VoteStorage {
 
     @Override
     public synchronized boolean getPallier(String pallier) {
-        List<Map<String, Object>> rows = query("SELECT enabled FROM vp_palliers WHERE name=?", List.of(key(pallier)));
-        return !rows.isEmpty() && Boolean.parseBoolean(String.valueOf(rows.get(0).get("enabled")));
+        List<Object> rows = queryRows("SELECT enabled FROM vp_palliers WHERE name=?", List.of(key(pallier)));
+        return !rows.isEmpty() && Boolean.parseBoolean(String.valueOf(rowGet(rows.get(0), "enabled")));
     }
 
     @Override
@@ -235,8 +275,8 @@ public class PcoreVoteStorage implements VoteStorage {
     }
 
     private String readState(String key) {
-        List<Map<String, Object>> rows = query("SELECT v FROM vp_state WHERE k=?", List.of(key));
-        return rows.isEmpty() ? null : String.valueOf(rows.get(0).get("v"));
+        List<Object> rows = queryRows("SELECT v FROM vp_state WHERE k=?", List.of(key));
+        return rows.isEmpty() ? null : String.valueOf(rowGet(rows.get(0), "v"));
     }
 
     private void upsertState(String key, String value) {

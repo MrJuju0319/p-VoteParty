@@ -309,3 +309,15 @@ Données gérées (même modèle fonctionnel que MySQL local):
 - garder `server-name` unique par instance
 - conserver `master: true` sur un seul serveur si vous voulez une source de vérité pour les rewards
 
+
+
+### Compatibilité p-core Row/Map
+
+`p-voteparty` supporte désormais les deux formats de résultat p-core DB:
+
+- `List<Map<String,Object>>`
+- `List<Row>` (ex: `dev.paracraft.pcore.api.Row`)
+
+Cela corrige l'erreur:
+
+`ClassCastException: dev.paracraft.pcore.api.Row cannot be cast to java.util.Map`.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.2
+
+- Correction compatibilité p-core query results:
+  - `PcoreVoteStorage` accepte maintenant `Map` **ou** `Row` (via réflexion)
+  - suppression du cast direct `Row -> Map` qui causait `ClassCastException` sur `/vp add vote ...`
+- Mise à jour README avec note explicite de compatibilité `Row/Map`.
+
 ## 1.5.1
 
 - Ajout de la commande `/vp reload` (admin) pour recharger `config.yml` à chaud.
