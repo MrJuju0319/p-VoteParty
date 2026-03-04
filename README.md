@@ -103,8 +103,9 @@ messages:
 - `/vp setpallier <joueur> <pallier> <true|false>`
   - Définit l'état d'un pallier pour un joueur précis.
 
-- `/vp reset pallier <joueur> <pallier|all>`
-  - Reset un pallier précis (ou tous avec `all`) pour un joueur précis.
+- `/vp reset pallier <joueur|all> <pallier|all>`
+  - Reset ciblé: un pallier d'un joueur, tous les palliers d'un joueur, ou un pallier pour tous les joueurs.
+  - `all all` = reset global de tous les palliers de tous les joueurs.
 
 ---
 
@@ -129,7 +130,7 @@ Identifiant: `p-voteparty`
 
 - `%p-voteparty_pallier_<X>%`
   - Ex: `%p-voteparty_pallier_10%`
-  - Retourne `true` ou `false` **pour le joueur du placeholder**.
+  - Retourne `true` ou `false` **pour le joueur du placeholder** (palliers stockés par joueur).
 
 ---
 

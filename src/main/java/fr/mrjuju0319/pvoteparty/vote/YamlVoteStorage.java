@@ -199,6 +199,35 @@ public class YamlVoteStorage implements VoteStorage {
         dirty = true;
     }
 
+
+    @Override
+    public synchronized void resetPalliersForAllPlayers(String pallierOrAll) {
+        if ("all".equalsIgnoreCase(pallierOrAll)) {
+            palliers.clear();
+            dirty = true;
+            return;
+        }
+
+        String pal = key(pallierOrAll);
+        boolean changed = false;
+        List<String> emptyPlayers = new ArrayList<>();
+        for (Map.Entry<String, Map<String, Boolean>> entry : palliers.entrySet()) {
+            Map<String, Boolean> byPallier = entry.getValue();
+            if (byPallier.remove(pal) != null) {
+                changed = true;
+            }
+            if (byPallier.isEmpty()) {
+                emptyPlayers.add(entry.getKey());
+            }
+        }
+        for (String player : emptyPlayers) {
+            palliers.remove(player);
+        }
+        if (changed || !emptyPlayers.isEmpty()) {
+            dirty = true;
+        }
+    }
+
     @Override
     public synchronized void upsertSharedConfig(VoteConfig config) {
         shared.put("goal", config.votePartyGoal());

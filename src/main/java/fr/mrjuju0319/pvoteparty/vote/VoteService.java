@@ -160,11 +160,16 @@ public class VoteService {
         return storage.getPallier(playerName, pallier);
     }
 
-    public void resetPallier(String playerName, String pallierOrAll) {
+    public void resetPallier(String playerOrAll, String pallierOrAll) {
+        if ("all".equalsIgnoreCase(playerOrAll)) {
+            storage.resetPalliersForAllPlayers(pallierOrAll);
+            return;
+        }
+
         if ("all".equalsIgnoreCase(pallierOrAll)) {
-            storage.resetAllPalliers(playerName);
+            storage.resetAllPalliers(playerOrAll);
         } else {
-            storage.resetPallier(playerName, pallierOrAll);
+            storage.resetPallier(playerOrAll, pallierOrAll);
         }
     }
 

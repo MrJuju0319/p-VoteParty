@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.5.4
+
+- Extension de la commande reset pallier pour supporter les deux axes `joueur|all` et `pallier|all`:
+  - `/vp reset pallier <joueur|all> <pallier|all>`
+- Ajout du reset global multi-joueurs dans l'API storage:
+  - `resetPalliersForAllPlayers(String pallierOrAll)`
+- Implémentation backend:
+  - `YamlVoteStorage` (purge par pallier global ou purge totale)
+  - `MysqlVoteStorage` (DELETE by name / TRUNCATE `vp_player_palliers`)
+  - `PcoreVoteStorage` (DELETE by name / TRUNCATE `vp_player_palliers`)
+- Mise à jour README et usage des commandes dynamiques `/vp`.
+
 ## 1.5.3
 
 - Refonte des palliers en **mode par joueur** (plus global):

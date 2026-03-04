@@ -310,6 +310,26 @@ public class MysqlVoteStorage implements VoteStorage {
         }
     }
 
+
+    @Override
+    public synchronized void resetPalliersForAllPlayers(String pallierOrAll) {
+        try {
+            if ("all".equalsIgnoreCase(pallierOrAll)) {
+                try (PreparedStatement ps = connection.prepareStatement("TRUNCATE TABLE vp_player_palliers")) {
+                    ps.executeUpdate();
+                }
+                return;
+            }
+
+            try (PreparedStatement ps = connection.prepareStatement("DELETE FROM vp_player_palliers WHERE name=?")) {
+                ps.setString(1, key(pallierOrAll));
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     @Override
     public synchronized void upsertSharedConfig(VoteConfig config) {
         upsertState("cfg.goal", String.valueOf(config.votePartyGoal()));

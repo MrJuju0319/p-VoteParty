@@ -87,7 +87,7 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        sender.sendMessage(voteService.color("&eUsage: /vp [reload|add vote <nombre> <joueur>|setpallier <joueur> <pallier> <true/false>|reset pallier <joueur> <pallier/all>|party]"));
+        sender.sendMessage(voteService.color("&eUsage: /vp [reload|add vote <nombre> <joueur>|setpallier <joueur> <pallier> <true/false>|reset pallier <joueur|all> <pallier|all>|party]"));
         return true;
     }
 
@@ -104,6 +104,8 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             completions.add("vote");
         } else if (args.length == 2 && args[0].equalsIgnoreCase("reset")) {
             completions.add("pallier");
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("reset") && args[1].equalsIgnoreCase("pallier")) {
+            completions.add("all");
         } else if (args.length == 4 && args[0].equalsIgnoreCase("reset") && args[1].equalsIgnoreCase("pallier")) {
             completions.add("all");
         } else if (args.length == 4 && args[0].equalsIgnoreCase("setpallier")) {

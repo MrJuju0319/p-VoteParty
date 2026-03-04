@@ -248,6 +248,16 @@ public class PcoreVoteStorage implements VoteStorage {
         exec("DELETE FROM vp_player_palliers WHERE player_name=?", List.of(key(playerName)));
     }
 
+
+    @Override
+    public synchronized void resetPalliersForAllPlayers(String pallierOrAll) {
+        if ("all".equalsIgnoreCase(pallierOrAll)) {
+            exec("TRUNCATE TABLE vp_player_palliers", List.of());
+            return;
+        }
+        exec("DELETE FROM vp_player_palliers WHERE name=?", List.of(key(pallierOrAll)));
+    }
+
     @Override
     public synchronized void upsertSharedConfig(VoteConfig config) {
         upsertState("cfg.goal", String.valueOf(config.votePartyGoal()));

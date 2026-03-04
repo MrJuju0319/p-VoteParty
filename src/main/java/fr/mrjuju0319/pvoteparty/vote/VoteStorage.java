@@ -37,6 +37,8 @@ public interface VoteStorage {
 
     void resetAllPalliers(String playerName);
 
+    void resetPalliersForAllPlayers(String pallierOrAll);
+
     void upsertSharedConfig(VoteConfig config);
 
     SharedConfig loadSharedConfig();
