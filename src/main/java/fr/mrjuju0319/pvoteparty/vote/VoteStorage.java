@@ -29,13 +29,13 @@ public interface VoteStorage {
 
     Map<String, Integer> topVotes(int limit);
 
-    void setPallier(String pallier, boolean value);
+    void setPallier(String playerName, String pallier, boolean value);
 
-    boolean getPallier(String pallier);
+    boolean getPallier(String playerName, String pallier);
 
-    void resetPallier(String pallier);
+    void resetPallier(String playerName, String pallier);
 
-    void resetAllPalliers();
+    void resetAllPalliers(String playerName);
 
     void upsertSharedConfig(VoteConfig config);
 

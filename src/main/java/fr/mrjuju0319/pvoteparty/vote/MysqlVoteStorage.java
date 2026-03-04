@@ -33,7 +33,7 @@ public class MysqlVoteStorage implements VoteStorage {
             st.executeUpdate("CREATE TABLE IF NOT EXISTS vp_state (k VARCHAR(64) PRIMARY KEY, v TEXT NOT NULL)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS vp_pending (id BIGINT AUTO_INCREMENT PRIMARY KEY, player_name VARCHAR(32) NOT NULL, command TEXT NOT NULL)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS vp_online (player_name VARCHAR(32) PRIMARY KEY, server_name VARCHAR(64) NOT NULL)");
-            st.executeUpdate("CREATE TABLE IF NOT EXISTS vp_palliers (name VARCHAR(64) PRIMARY KEY, enabled BOOLEAN NOT NULL)");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS vp_player_palliers (player_name VARCHAR(32) NOT NULL, name VARCHAR(64) NOT NULL, enabled BOOLEAN NOT NULL, PRIMARY KEY(player_name, name))");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS vp_stats (" +
                     "player_name VARCHAR(32) PRIMARY KEY," +
                     "day_count INT NOT NULL, week_count INT NOT NULL, month_count INT NOT NULL, year_count INT NOT NULL, total_count INT NOT NULL," +
@@ -265,11 +265,12 @@ public class MysqlVoteStorage implements VoteStorage {
     }
 
     @Override
-    public synchronized void setPallier(String pallier, boolean value) {
+    public synchronized void setPallier(String playerName, String pallier, boolean value) {
         try (PreparedStatement ps = connection.prepareStatement(
-                "INSERT INTO vp_palliers(name, enabled) VALUES (?,?) ON DUPLICATE KEY UPDATE enabled=VALUES(enabled)")) {
-            ps.setString(1, key(pallier));
-            ps.setBoolean(2, value);
+                "INSERT INTO vp_player_palliers(player_name, name, enabled) VALUES (?,?,?) ON DUPLICATE KEY UPDATE enabled=VALUES(enabled)")) {
+            ps.setString(1, key(playerName));
+            ps.setString(2, key(pallier));
+            ps.setBoolean(3, value);
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new IllegalStateException(e);
@@ -277,9 +278,10 @@ public class MysqlVoteStorage implements VoteStorage {
     }
 
     @Override
-    public synchronized boolean getPallier(String pallier) {
-        try (PreparedStatement ps = connection.prepareStatement("SELECT enabled FROM vp_palliers WHERE name=?")) {
-            ps.setString(1, key(pallier));
+    public synchronized boolean getPallier(String playerName, String pallier) {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT enabled FROM vp_player_palliers WHERE player_name=? AND name=?")) {
+            ps.setString(1, key(playerName));
+            ps.setString(2, key(pallier));
             ResultSet rs = ps.executeQuery();
             return rs.next() && rs.getBoolean(1);
         } catch (SQLException e) {
@@ -288,9 +290,10 @@ public class MysqlVoteStorage implements VoteStorage {
     }
 
     @Override
-    public synchronized void resetPallier(String pallier) {
-        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM vp_palliers WHERE name=?")) {
-            ps.setString(1, key(pallier));
+    public synchronized void resetPallier(String playerName, String pallier) {
+        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM vp_player_palliers WHERE player_name=? AND name=?")) {
+            ps.setString(1, key(playerName));
+            ps.setString(2, key(pallier));
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new IllegalStateException(e);
@@ -298,8 +301,9 @@ public class MysqlVoteStorage implements VoteStorage {
     }
 
     @Override
-    public synchronized void resetAllPalliers() {
-        try (PreparedStatement ps = connection.prepareStatement("TRUNCATE TABLE vp_palliers")) {
+    public synchronized void resetAllPalliers(String playerName) {
+        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM vp_player_palliers WHERE player_name=?")) {
+            ps.setString(1, key(playerName));
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new IllegalStateException(e);

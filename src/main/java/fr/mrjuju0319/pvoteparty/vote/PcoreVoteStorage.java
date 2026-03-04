@@ -94,7 +94,7 @@ public class PcoreVoteStorage implements VoteStorage {
         exec("CREATE TABLE IF NOT EXISTS vp_state (k VARCHAR(64) PRIMARY KEY, v TEXT NOT NULL)", List.of());
         exec("CREATE TABLE IF NOT EXISTS vp_pending (id BIGINT AUTO_INCREMENT PRIMARY KEY, player_name VARCHAR(32) NOT NULL, command TEXT NOT NULL)", List.of());
         exec("CREATE TABLE IF NOT EXISTS vp_online (player_name VARCHAR(32) PRIMARY KEY, server_name VARCHAR(64) NOT NULL)", List.of());
-        exec("CREATE TABLE IF NOT EXISTS vp_palliers (name VARCHAR(64) PRIMARY KEY, enabled BOOLEAN NOT NULL)", List.of());
+        exec("CREATE TABLE IF NOT EXISTS vp_player_palliers (player_name VARCHAR(32) NOT NULL, name VARCHAR(64) NOT NULL, enabled BOOLEAN NOT NULL, PRIMARY KEY(player_name, name))", List.of());
         exec("CREATE TABLE IF NOT EXISTS vp_stats (player_name VARCHAR(32) PRIMARY KEY, day_count INT NOT NULL, week_count INT NOT NULL, month_count INT NOT NULL, year_count INT NOT NULL, total_count INT NOT NULL, day_key VARCHAR(16) NOT NULL, week_key VARCHAR(16) NOT NULL, month_key VARCHAR(16) NOT NULL, year_key VARCHAR(8) NOT NULL)", List.of());
     }
 
@@ -228,24 +228,24 @@ public class PcoreVoteStorage implements VoteStorage {
     }
 
     @Override
-    public synchronized void setPallier(String pallier, boolean value) {
-        exec("INSERT INTO vp_palliers(name, enabled) VALUES (?,?) ON DUPLICATE KEY UPDATE enabled=VALUES(enabled)", List.of(key(pallier), value));
+    public synchronized void setPallier(String playerName, String pallier, boolean value) {
+        exec("INSERT INTO vp_player_palliers(player_name, name, enabled) VALUES (?,?,?) ON DUPLICATE KEY UPDATE enabled=VALUES(enabled)", List.of(key(playerName), key(pallier), value));
     }
 
     @Override
-    public synchronized boolean getPallier(String pallier) {
-        List<Object> rows = queryRows("SELECT enabled FROM vp_palliers WHERE name=?", List.of(key(pallier)));
+    public synchronized boolean getPallier(String playerName, String pallier) {
+        List<Object> rows = queryRows("SELECT enabled FROM vp_player_palliers WHERE player_name=? AND name=?", List.of(key(playerName), key(pallier)));
         return !rows.isEmpty() && Boolean.parseBoolean(String.valueOf(rowGet(rows.get(0), "enabled")));
     }
 
     @Override
-    public synchronized void resetPallier(String pallier) {
-        exec("DELETE FROM vp_palliers WHERE name=?", List.of(key(pallier)));
+    public synchronized void resetPallier(String playerName, String pallier) {
+        exec("DELETE FROM vp_player_palliers WHERE player_name=? AND name=?", List.of(key(playerName), key(pallier)));
     }
 
     @Override
-    public synchronized void resetAllPalliers() {
-        exec("TRUNCATE TABLE vp_palliers", List.of());
+    public synchronized void resetAllPalliers(String playerName) {
+        exec("DELETE FROM vp_player_palliers WHERE player_name=?", List.of(key(playerName)));
     }
 
     @Override

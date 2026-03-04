@@ -100,11 +100,11 @@ messages:
 - `/vp party`
   - Déclenche immédiatement les rewards de vote-party.
 
-- `/vp setpallier <pallier> <true|false>`
-  - Active/désactive un pallier booléen.
+- `/vp setpallier <joueur> <pallier> <true|false>`
+  - Définit l'état d'un pallier pour un joueur précis.
 
-- `/vp reset pallier <pallier|all>`
-  - Reset un pallier précis, ou tous les palliers avec `all`.
+- `/vp reset pallier <joueur> <pallier|all>`
+  - Reset un pallier précis (ou tous avec `all`) pour un joueur précis.
 
 ---
 
@@ -129,7 +129,7 @@ Identifiant: `p-voteparty`
 
 - `%p-voteparty_pallier_<X>%`
   - Ex: `%p-voteparty_pallier_10%`
-  - Retourne `true` ou `false`.
+  - Retourne `true` ou `false` **pour le joueur du placeholder**.
 
 ---
 
@@ -199,7 +199,7 @@ Sur un environnement sans accès internet, installez manuellement Java 21 puis r
 ## 10) Résumé rapide des variables
 
 - Variable commandes config: `{player}`
-- Placeholder pallier: `%p-voteparty_pallier_<X>%`
+- Placeholder pallier: `%p-voteparty_pallier_<X>%` (état par joueur)
 - Placeholders vote: 
   - `%p-voteparty_vote_party%`
   - `%p-voteparty_vote_vote%`
@@ -299,7 +299,7 @@ Données gérées (même modèle fonctionnel que MySQL local):
 - progression vote-party
 - pending rewards
 - présence online
-- palliers
+- palliers (par joueur)
 - stats (jour/semaine/mois/année/total)
 - shared config (mode master/consumer)
 

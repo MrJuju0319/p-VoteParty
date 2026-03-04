@@ -41,8 +41,11 @@ public class UtilitiesPlaceholderExpansion extends PlaceholderExpansion {
     @Override
     public @Nullable String onRequest(OfflinePlayer player, @NotNull String params) {
         if (params.startsWith("pallier_")) {
+            if (player == null || player.getName() == null) {
+                return "false";
+            }
             String pallierName = params.substring("pallier_".length());
-            return String.valueOf(voteService.getPallier(pallierName));
+            return String.valueOf(voteService.getPallier(player.getName(), pallierName));
         }
 
         if (params.equalsIgnoreCase("vote_party")) {

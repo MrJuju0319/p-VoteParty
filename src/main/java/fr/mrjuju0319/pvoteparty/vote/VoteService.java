@@ -152,19 +152,19 @@ public class VoteService {
         return votePartyGoal;
     }
 
-    public void setPallier(String pallier, boolean value) {
-        storage.setPallier(pallier, value);
+    public void setPallier(String playerName, String pallier, boolean value) {
+        storage.setPallier(playerName, pallier, value);
     }
 
-    public boolean getPallier(String pallier) {
-        return storage.getPallier(pallier);
+    public boolean getPallier(String playerName, String pallier) {
+        return storage.getPallier(playerName, pallier);
     }
 
-    public void resetPallier(String pallierOrAll) {
+    public void resetPallier(String playerName, String pallierOrAll) {
         if ("all".equalsIgnoreCase(pallierOrAll)) {
-            storage.resetAllPalliers();
+            storage.resetAllPalliers(playerName);
         } else {
-            storage.resetPallier(pallierOrAll);
+            storage.resetPallier(playerName, pallierOrAll);
         }
     }
 

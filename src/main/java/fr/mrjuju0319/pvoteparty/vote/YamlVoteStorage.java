@@ -21,7 +21,7 @@ public class YamlVoteStorage implements VoteStorage {
     private final Map<String, Integer> votes = new HashMap<>();
     private final Map<String, List<String>> pending = new HashMap<>();
     private final Map<String, String> online = new HashMap<>();
-    private final Map<String, Boolean> palliers = new HashMap<>();
+    private final Map<String, Map<String, Boolean>> palliers = new HashMap<>();
     private final Map<String, StatsState> stats = new HashMap<>();
     private final Map<String, Object> shared = new HashMap<>();
     private int partyProgress;
@@ -65,8 +65,16 @@ public class YamlVoteStorage implements VoteStorage {
 
         ConfigurationSection pa = yaml.getConfigurationSection("palliers");
         if (pa != null) {
-            for (String name : pa.getKeys(false)) {
-                palliers.put(name, yaml.getBoolean("palliers." + name, false));
+            for (String player : pa.getKeys(false)) {
+                ConfigurationSection playerSection = pa.getConfigurationSection(player);
+                if (playerSection == null) {
+                    continue;
+                }
+                Map<String, Boolean> byPallier = new HashMap<>();
+                for (String pallier : playerSection.getKeys(false)) {
+                    byPallier.put(pallier, yaml.getBoolean("palliers." + player + "." + pallier, false));
+                }
+                palliers.put(player, byPallier);
             }
         }
 
@@ -157,25 +165,37 @@ public class YamlVoteStorage implements VoteStorage {
     }
 
     @Override
-    public synchronized void setPallier(String pallier, boolean value) {
-        palliers.put(key(pallier), value);
+    public synchronized void setPallier(String playerName, String pallier, boolean value) {
+        String player = key(playerName);
+        String pal = key(pallier);
+        palliers.computeIfAbsent(player, k -> new HashMap<>()).put(pal, value);
         dirty = true;
     }
 
     @Override
-    public synchronized boolean getPallier(String pallier) {
-        return palliers.getOrDefault(key(pallier), false);
+    public synchronized boolean getPallier(String playerName, String pallier) {
+        String player = key(playerName);
+        String pal = key(pallier);
+        return palliers.getOrDefault(player, Map.of()).getOrDefault(pal, false);
     }
 
     @Override
-    public synchronized void resetPallier(String pallier) {
-        palliers.remove(key(pallier));
-        dirty = true;
+    public synchronized void resetPallier(String playerName, String pallier) {
+        String player = key(playerName);
+        String pal = key(pallier);
+        Map<String, Boolean> byPallier = palliers.get(player);
+        if (byPallier != null) {
+            byPallier.remove(pal);
+            if (byPallier.isEmpty()) {
+                palliers.remove(player);
+            }
+            dirty = true;
+        }
     }
 
     @Override
-    public synchronized void resetAllPalliers() {
-        palliers.clear();
+    public synchronized void resetAllPalliers(String playerName) {
+        palliers.remove(key(playerName));
         dirty = true;
     }
 
@@ -211,7 +231,7 @@ public class YamlVoteStorage implements VoteStorage {
 
         pending.forEach((name, commands) -> yaml.set("pending." + name, commands));
         online.forEach((name, server) -> yaml.set("online." + name, server));
-        palliers.forEach((name, value) -> yaml.set("palliers." + name, value));
+        palliers.forEach((player, map) -> map.forEach((pallier, value) -> yaml.set("palliers." + player + "." + pallier, value)));
 
         yaml.set("shared-config.goal", shared.get("goal"));
         yaml.set("shared-config.vote-rewards", shared.getOrDefault("vote-rewards", List.of()));

@@ -60,21 +60,24 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args[0].equalsIgnoreCase("setpallier") && args.length >= 3) {
-            String pallier = args[1];
-            if (!args[2].equalsIgnoreCase("true") && !args[2].equalsIgnoreCase("false")) {
+        if (args[0].equalsIgnoreCase("setpallier") && args.length >= 4) {
+            String targetName = args[1];
+            String pallier = args[2];
+            if (!args[3].equalsIgnoreCase("true") && !args[3].equalsIgnoreCase("false")) {
                 sender.sendMessage(voteService.color("&cValeur invalide: utilise true ou false."));
                 return true;
             }
-            boolean value = Boolean.parseBoolean(args[2]);
-            voteService.setPallier(pallier, value);
-            sender.sendMessage(voteService.color("&aPallier &f" + pallier + " &aset a &f" + value));
+            boolean value = Boolean.parseBoolean(args[3]);
+            voteService.setPallier(targetName, pallier, value);
+            sender.sendMessage(voteService.color("&aPallier &f" + pallier + " &apour &f" + targetName + " &aset a &f" + value));
             return true;
         }
 
-        if (args[0].equalsIgnoreCase("reset") && args.length >= 3 && args[1].equalsIgnoreCase("pallier")) {
-            voteService.resetPallier(args[2]);
-            sender.sendMessage(voteService.color("&aPallier reset: &f" + args[2]));
+        if (args[0].equalsIgnoreCase("reset") && args.length >= 4 && args[1].equalsIgnoreCase("pallier")) {
+            String targetName = args[2];
+            String pallier = args[3];
+            voteService.resetPallier(targetName, pallier);
+            sender.sendMessage(voteService.color("&aPallier reset pour &f" + targetName + "&a: &f" + pallier));
             return true;
         }
 
@@ -84,7 +87,7 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        sender.sendMessage(voteService.color("&eUsage: /vp [reload|add vote <nombre> <joueur>|setpallier <pallier> <true/false>|reset pallier <pallier/all>|party]"));
+        sender.sendMessage(voteService.color("&eUsage: /vp [reload|add vote <nombre> <joueur>|setpallier <joueur> <pallier> <true/false>|reset pallier <joueur> <pallier/all>|party]"));
         return true;
     }
 
@@ -101,9 +104,9 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             completions.add("vote");
         } else if (args.length == 2 && args[0].equalsIgnoreCase("reset")) {
             completions.add("pallier");
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("reset") && args[1].equalsIgnoreCase("pallier")) {
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("reset") && args[1].equalsIgnoreCase("pallier")) {
             completions.add("all");
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("setpallier")) {
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("setpallier")) {
             completions.add("true");
             completions.add("false");
         }

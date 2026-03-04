@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.5.3
+
+- Refonte des palliers en **mode par joueur** (plus global):
+  - `/vp setpallier <joueur> <pallier> <true|false>`
+  - `/vp reset pallier <joueur> <pallier|all>`
+- Placeholder `%p-voteparty_pallier_<X>%` désormais évalué pour le joueur du placeholder.
+- Mise à jour storage API + implémentations:
+  - `YamlVoteStorage` (structure `palliers.<player>.<pallier>`)
+  - `MysqlVoteStorage` (table `vp_player_palliers`)
+  - `PcoreVoteStorage` (table `vp_player_palliers`)
+- Mise à jour README (commandes, placeholders, fonctionnement palliers par joueur).
+
 ## 1.5.2
 
 - Correction compatibilité p-core query results:
