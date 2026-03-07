@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+}
+
+group = 'fr.mrjuju0319'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT'
+    compileOnly 'me.clip:placeholderapi:2.11.6'
+
+    implementation('com.mysql:mysql-connector-j:8.4.0') {
+        because 'Storage MySQL requis pour p-voteparty'
+    }
+
+    constraints {
+        implementation('org.apache.commons:commons-lang3:3.18.0') {
+            because 'Force une version plus récente pour réduire le risque CVE sur versions 3.12.x'
+        }
+        implementation('com.google.protobuf:protobuf-java:3.25.8') {
+            because 'Force une version plus récente pour réduire le risque CVE sur versions 3.25.1'
+        }
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

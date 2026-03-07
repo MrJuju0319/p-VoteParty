@@ -1,0 +1,26 @@
+server-name: lobby-1
+master: false
+
+sync:
+  interval-seconds: 5
+
+storage:
+  type: yml # yml | mysql | pcore | auto
+  mysql:
+    host: 127.0.0.1
+    port: 3306
+    database: pvoteparty
+    username: root
+    password: ""
+    ssl: false
+
+vote:
+  goal: 10
+  rewards:
+    - "eco give {player} 100"
+  party-rewards:
+    - "say &aVote party terminee sur {player}!"
+    - "crate key giveall vote 1"
+
+messages:
+  no-online-players: "&cAucun joueur connecte sur ce serveur pour executer une commande avec {player}."

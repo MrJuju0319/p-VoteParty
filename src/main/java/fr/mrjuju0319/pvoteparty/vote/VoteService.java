@@ -1,0 +1,198 @@
+package fr.mrjuju0319.pvoteparty.vote;
+
+import java.util.List;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class VoteService {
+
+    private final JavaPlugin plugin;
+    private final VoteStorage storage;
+    private String serverName;
+    private String noOnlinePlayersMessage;
+    private boolean master;
+
+    private int votePartyGoal;
+    private List<String> voteRewards;
+    private List<String> partyRewards;
+
+    public VoteService(JavaPlugin plugin, VoteConfig config, VoteStorage storage) {
+        this.plugin = plugin;
+        this.storage = storage;
+        this.serverName = config.serverName();
+        this.noOnlinePlayersMessage = config.noOnlinePlayersMessage();
+        this.master = config.master();
+        this.votePartyGoal = config.votePartyGoal();
+        this.voteRewards = config.voteRewards();
+        this.partyRewards = config.partyRewards();
+    }
+
+    public void initializeRuntimeConfig() {
+        if (master) {
+            storage.upsertSharedConfig(new VoteConfig(serverName, votePartyGoal, voteRewards, partyRewards, noOnlinePlayersMessage, "", null, true, 5));
+        } else {
+            applySharedConfig();
+        }
+    }
+
+    public void applySharedConfig() {
+        VoteStorage.SharedConfig shared = storage.loadSharedConfig();
+        if (shared.goal() != null && shared.goal() > 0) {
+            votePartyGoal = shared.goal();
+        }
+        if (!shared.voteRewards().isEmpty()) {
+            voteRewards = shared.voteRewards();
+        }
+        if (!shared.partyRewards().isEmpty()) {
+            partyRewards = shared.partyRewards();
+        }
+    }
+
+    public void reloadFromConfig(VoteConfig config) {
+        this.serverName = config.serverName();
+        this.noOnlinePlayersMessage = config.noOnlinePlayersMessage();
+        this.master = config.master();
+        this.votePartyGoal = config.votePartyGoal();
+        this.voteRewards = config.voteRewards();
+        this.partyRewards = config.partyRewards();
+
+        if (master) {
+            storage.upsertSharedConfig(config);
+        } else {
+            applySharedConfig();
+        }
+    }
+
+    public void addVote(String playerName, int amount) {
+        storage.incrementVotes(playerName, amount);
+        int party = storage.incrementPartyProgress(amount);
+
+        dispatchVoteRewards(playerName, amount);
+
+        if (party >= votePartyGoal) {
+            triggerPartyRewards();
+            storage.setPartyProgress(0);
+        }
+    }
+
+    private void dispatchVoteRewards(String playerName, int amount) {
+        for (int i = 0; i < amount; i++) {
+            for (String command : voteRewards) {
+                queueOrDispatch(playerName, command);
+            }
+        }
+    }
+
+    public void triggerPartyRewards() {
+        for (String command : partyRewards) {
+            if (command.contains("{player}")) {
+                dispatchPartyPlayerCommand(command);
+            } else {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+            }
+        }
+    }
+
+    public void dispatchPartyPlayerCommand(String command) {
+        boolean anyOnline = false;
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            anyOnline = true;
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("{player}", online.getName()));
+        }
+        if (!anyOnline) {
+            plugin.getLogger().warning(stripLegacyColors(color(noOnlinePlayersMessage)));
+        }
+    }
+
+    private void queueOrDispatch(String playerName, String command) {
+        String parsed = command.replace("{player}", playerName);
+        Player local = Bukkit.getPlayerExact(playerName);
+        if (local != null && local.isOnline()) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsed);
+        } else {
+            storage.enqueuePendingReward(playerName, parsed);
+        }
+    }
+
+    public void flushPendingForPlayer(String playerName) {
+        List<String> pending = storage.popPendingRewards(playerName);
+        for (String command : pending) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        }
+    }
+
+    public void heartbeatOnlinePlayers() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            storage.setOnlineServer(player.getName(), serverName);
+        }
+    }
+
+    public void setOnlinePlayer(String playerName) {
+        storage.setOnlineServer(playerName, serverName);
+    }
+
+    public void clearOnlinePlayer(String playerName) {
+        storage.clearOnlineServer(playerName, serverName);
+    }
+
+    public int getVotes(String playerName) {
+        return storage.getVotes(playerName);
+    }
+
+    public VotePlayerStats getStats(String playerName) {
+        return storage.getStats(playerName);
+    }
+
+    public int getPartyProgress() {
+        return storage.getPartyProgress();
+    }
+
+    public int getPartyGoal() {
+        return votePartyGoal;
+    }
+
+    public void setPallier(String playerName, String pallier, boolean value) {
+        storage.setPallier(playerName, pallier, value);
+    }
+
+    public boolean getPallier(String playerName, String pallier) {
+        return storage.getPallier(playerName, pallier);
+    }
+
+    public void resetPallier(String playerOrAll, String pallierOrAll) {
+        if ("all".equalsIgnoreCase(playerOrAll)) {
+            storage.resetPalliersForAllPlayers(pallierOrAll);
+            return;
+        }
+
+        if ("all".equalsIgnoreCase(pallierOrAll)) {
+            storage.resetAllPalliers(playerOrAll);
+        } else {
+            storage.resetPallier(playerOrAll, pallierOrAll);
+        }
+    }
+
+    public String color(String message) {
+        return message == null ? "" : message.replace('&', '§');
+    }
+
+    private String stripLegacyColors(String input) {
+        return input == null ? "" : input.replaceAll("(?i)§[0-9A-FK-ORX]", "");
+    }
+
+    public void tickSync(boolean pullSharedConfig) {
+        heartbeatOnlinePlayers();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            flushPendingForPlayer(player.getName());
+        }
+        if (pullSharedConfig) {
+            applySharedConfig();
+        }
+        storage.flush();
+    }
+
+    public void shutdown() {
+        storage.close();
+    }
+}
