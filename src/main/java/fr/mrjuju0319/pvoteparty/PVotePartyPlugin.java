@@ -98,8 +98,13 @@ public final class PVotePartyPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        voteService.setOnlinePlayer(event.getPlayer().getName());
-        voteService.flushPendingForPlayer(event.getPlayer().getName());
+        String playerName = event.getPlayer().getName();
+        voteService.setOnlinePlayer(playerName);
+        SchedulerAdapter.runLater(this, () -> {
+            if (Bukkit.getPlayerExact(playerName) != null) {
+                voteService.flushPendingForPlayer(playerName);
+            }
+        }, 40L);
     }
 
     @EventHandler
