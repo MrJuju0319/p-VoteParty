@@ -248,6 +248,16 @@ public class PcoreVoteStorage implements VoteStorage {
     }
 
     @Override
+    public synchronized List<String> getOnlinePlayers() {
+        List<Object> rows = queryRows("SELECT player_name FROM vp_online", List.of());
+        List<String> out = new ArrayList<>();
+        for (Object row : rows) {
+            out.add(String.valueOf(rowGet(row, "player_name")));
+        }
+        return out;
+    }
+
+    @Override
     public synchronized Map<String, Integer> topVotes(int limit) {
         List<Object> rows = queryRows("SELECT player_name, votes FROM vp_profiles ORDER BY votes DESC LIMIT ?", List.of(limit));
         Map<String, Integer> out = new LinkedHashMap<>();

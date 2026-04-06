@@ -297,6 +297,20 @@ public class MysqlVoteStorage implements VoteStorage {
     }
 
     @Override
+    public synchronized List<String> getOnlinePlayers() {
+        List<String> players = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement("SELECT player_name FROM vp_online")) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                players.add(rs.getString(1));
+            }
+            return players;
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @Override
     public synchronized Map<String, Integer> topVotes(int limit) {
         Map<String, Integer> map = new LinkedHashMap<>();
         try (PreparedStatement ps = connection.prepareStatement("SELECT player_name, votes FROM vp_profiles ORDER BY votes DESC LIMIT ?")) {

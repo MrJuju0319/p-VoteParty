@@ -163,6 +163,11 @@ public class YamlVoteStorage implements VoteStorage {
     }
 
     @Override
+    public synchronized List<String> getOnlinePlayers() {
+        return new ArrayList<>(online.keySet());
+    }
+
+    @Override
     public synchronized Map<String, Integer> topVotes(int limit) {
         return votes.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))

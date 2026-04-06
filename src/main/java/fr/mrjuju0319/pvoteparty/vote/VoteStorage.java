@@ -27,6 +27,8 @@ public interface VoteStorage {
 
     String getOnlineServer(String playerName);
 
+    List<String> getOnlinePlayers();
+
     Map<String, Integer> topVotes(int limit);
 
     void setPallier(String playerName, String pallier, boolean value);

@@ -1,6 +1,8 @@
 package fr.mrjuju0319.pvoteparty.vote;
 
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -181,6 +183,15 @@ public class VoteService {
 
     public void clearOnlinePlayer(String playerName) {
         storage.clearOnlineServer(playerName, serverName);
+    }
+
+    public List<String> getKnownOnlinePlayers() {
+        Set<String> names = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        names.addAll(storage.getOnlinePlayers());
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            names.add(player.getName());
+        }
+        return List.copyOf(names);
     }
 
     public int getVotes(String playerName) {
