@@ -81,13 +81,24 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (args[0].equalsIgnoreCase("reset") && args.length >= 4 && args[1].equalsIgnoreCase("vote")) {
+            String period = args[2];
+            String targetName = args[3];
+            if (!voteService.resetVotes(period, targetName)) {
+                sender.sendMessage(voteService.color("&cType de reset invalide. Utilise: total/days/hebdo/mois."));
+                return true;
+            }
+            sender.sendMessage(voteService.color("&aVotes reset (&f" + period + "&a) pour &f" + targetName));
+            return true;
+        }
+
         if (args[0].equalsIgnoreCase("party")) {
             voteService.triggerPartyRewards();
             sender.sendMessage(voteService.color("&aRewards de vote-party executes."));
             return true;
         }
 
-        sender.sendMessage(voteService.color("&eUsage: /vp [reload|add vote <nombre> <joueur>|setpallier <joueur> <pallier> <true/false>|reset pallier <joueur|all> <pallier|all>|party]"));
+        sender.sendMessage(voteService.color("&eUsage: /vp [reload|add vote <nombre> <joueur>|setpallier <joueur> <pallier> <true/false>|reset pallier <joueur|all> <pallier|all>|reset vote <total|days|hebdo|mois> <joueur|all>|party]"));
         return true;
     }
 
@@ -104,9 +115,17 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             completions.add("vote");
         } else if (args.length == 2 && args[0].equalsIgnoreCase("reset")) {
             completions.add("pallier");
+            completions.add("vote");
         } else if (args.length == 3 && args[0].equalsIgnoreCase("reset") && args[1].equalsIgnoreCase("pallier")) {
             completions.add("all");
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("reset") && args[1].equalsIgnoreCase("vote")) {
+            completions.add("total");
+            completions.add("days");
+            completions.add("hebdo");
+            completions.add("mois");
         } else if (args.length == 4 && args[0].equalsIgnoreCase("reset") && args[1].equalsIgnoreCase("pallier")) {
+            completions.add("all");
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("reset") && args[1].equalsIgnoreCase("vote")) {
             completions.add("all");
         } else if (args.length == 4 && args[0].equalsIgnoreCase("setpallier")) {
             completions.add("true");

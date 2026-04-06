@@ -81,6 +81,8 @@ public class YamlVoteStorage implements VoteStorage {
         shared.put("goal", yaml.get("shared-config.goal"));
         shared.put("vote-rewards", yaml.getStringList("shared-config.vote-rewards"));
         shared.put("party-rewards", yaml.getStringList("shared-config.party-rewards"));
+        shared.put("party-global-rewards", yaml.getStringList("shared-config.party-global-rewards"));
+        shared.put("party-player-rewards", yaml.getStringList("shared-config.party-player-rewards"));
     }
 
     @Override
@@ -120,7 +122,11 @@ public class YamlVoteStorage implements VoteStorage {
 
     @Override
     public synchronized VotePlayerStats getStats(String playerName) {
-        return stats.getOrDefault(key(playerName), StatsState.empty()).toPublic();
+        StatsState state = stats.computeIfAbsent(key(playerName), x -> StatsState.empty());
+        if (state.normalize(LocalDate.now())) {
+            dirty = true;
+        }
+        return state.toPublic();
     }
 
     @Override
@@ -180,6 +186,31 @@ public class YamlVoteStorage implements VoteStorage {
     }
 
     @Override
+    public synchronized void resetVotesForPlayer(String playerName, String period) {
+        String player = key(playerName);
+        StatsState state = stats.computeIfAbsent(player, x -> StatsState.empty());
+        state.resetPeriod(period, LocalDate.now());
+        if ("total".equals(period)) {
+            votes.put(player, 0);
+        }
+        dirty = true;
+    }
+
+    @Override
+    public synchronized void resetVotesForAllPlayers(String period) {
+        LocalDate now = LocalDate.now();
+        for (StatsState state : stats.values()) {
+            state.resetPeriod(period, now);
+        }
+        if ("total".equals(period)) {
+            for (String player : votes.keySet()) {
+                votes.put(player, 0);
+            }
+        }
+        dirty = true;
+    }
+
+    @Override
     public synchronized void resetPallier(String playerName, String pallier) {
         String player = key(playerName);
         String pal = key(pallier);
@@ -233,6 +264,8 @@ public class YamlVoteStorage implements VoteStorage {
         shared.put("goal", config.votePartyGoal());
         shared.put("vote-rewards", config.voteRewards());
         shared.put("party-rewards", config.partyRewards());
+        shared.put("party-global-rewards", config.partyGlobalRewards());
+        shared.put("party-player-rewards", config.partyPlayerRewards());
         dirty = true;
     }
 
@@ -242,7 +275,9 @@ public class YamlVoteStorage implements VoteStorage {
         Integer goal = shared.get("goal") instanceof Integer g ? g : null;
         List<String> voteRewards = (List<String>) shared.getOrDefault("vote-rewards", List.of());
         List<String> partyRewards = (List<String>) shared.getOrDefault("party-rewards", List.of());
-        return new SharedConfig(goal, voteRewards, partyRewards);
+        List<String> partyGlobalRewards = (List<String>) shared.getOrDefault("party-global-rewards", List.of());
+        List<String> partyPlayerRewards = (List<String>) shared.getOrDefault("party-player-rewards", List.of());
+        return new SharedConfig(goal, voteRewards, partyRewards, partyGlobalRewards, partyPlayerRewards);
     }
 
     @Override
@@ -265,6 +300,8 @@ public class YamlVoteStorage implements VoteStorage {
         yaml.set("shared-config.goal", shared.get("goal"));
         yaml.set("shared-config.vote-rewards", shared.getOrDefault("vote-rewards", List.of()));
         yaml.set("shared-config.party-rewards", shared.getOrDefault("party-rewards", List.of()));
+        yaml.set("shared-config.party-global-rewards", shared.getOrDefault("party-global-rewards", List.of()));
+        yaml.set("shared-config.party-player-rewards", shared.getOrDefault("party-player-rewards", List.of()));
 
         try {
             yaml.save(file);
@@ -316,6 +353,17 @@ public class YamlVoteStorage implements VoteStorage {
 
         void increment(int value) {
             LocalDate now = LocalDate.now();
+            normalize(now);
+
+            day += value;
+            week += value;
+            month += value;
+            year += value;
+            total += value;
+        }
+
+        boolean normalize(LocalDate now) {
+            boolean changed = false;
             String d = now.toString();
             String w = weekKey(now);
             String m = now.getYear() + "-" + now.getMonthValue();
@@ -324,25 +372,44 @@ public class YamlVoteStorage implements VoteStorage {
             if (!d.equals(dayKey)) {
                 day = 0;
                 dayKey = d;
+                changed = true;
             }
             if (!w.equals(weekKey)) {
                 week = 0;
                 weekKey = w;
+                changed = true;
             }
             if (!m.equals(monthKey)) {
                 month = 0;
                 monthKey = m;
+                changed = true;
             }
             if (!y.equals(yearKey)) {
                 year = 0;
                 yearKey = y;
+                changed = true;
             }
+            return changed;
+        }
 
-            day += value;
-            week += value;
-            month += value;
-            year += value;
-            total += value;
+        void resetPeriod(String period, LocalDate now) {
+            switch (period) {
+                case "day" -> {
+                    day = 0;
+                    dayKey = now.toString();
+                }
+                case "week" -> {
+                    week = 0;
+                    weekKey = weekKey(now);
+                }
+                case "month" -> {
+                    month = 0;
+                    monthKey = now.getYear() + "-" + now.getMonthValue();
+                }
+                case "total" -> total = 0;
+                default -> {
+                }
+            }
         }
 
         VotePlayerStats toPublic() {
@@ -363,7 +430,7 @@ public class YamlVoteStorage implements VoteStorage {
 
         private static String weekKey(LocalDate now) {
             WeekFields wf = WeekFields.ISO;
-            return now.getYear() + "-W" + now.get(wf.weekOfWeekBasedYear());
+            return now.get(wf.weekBasedYear()) + "-W" + now.get(wf.weekOfWeekBasedYear());
         }
     }
 }

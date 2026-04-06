@@ -33,6 +33,10 @@ public interface VoteStorage {
 
     boolean getPallier(String playerName, String pallier);
 
+    void resetVotesForPlayer(String playerName, String period);
+
+    void resetVotesForAllPlayers(String period);
+
     void resetPallier(String playerName, String pallier);
 
     void resetAllPalliers(String playerName);
@@ -47,6 +51,12 @@ public interface VoteStorage {
 
     void close();
 
-    record SharedConfig(Integer goal, List<String> voteRewards, List<String> partyRewards) {
+    record SharedConfig(
+            Integer goal,
+            List<String> voteRewards,
+            List<String> partyRewards,
+            List<String> partyGlobalRewards,
+            List<String> partyPlayerRewards
+    ) {
     }
 }
