@@ -263,6 +263,8 @@ public class PcoreVoteStorage implements VoteStorage {
         upsertState("cfg.goal", String.valueOf(config.votePartyGoal()));
         upsertState("cfg.voteRewards", String.join("\n", config.voteRewards()));
         upsertState("cfg.partyRewards", String.join("\n", config.partyRewards()));
+        upsertState("cfg.partyGlobalRewards", String.join("\n", config.partyGlobalRewards()));
+        upsertState("cfg.partyPlayerRewards", String.join("\n", config.partyPlayerRewards()));
     }
 
     @Override
@@ -270,7 +272,9 @@ public class PcoreVoteStorage implements VoteStorage {
         Integer goal = readInt("cfg.goal");
         List<String> voteRewards = splitLines(readState("cfg.voteRewards"));
         List<String> partyRewards = splitLines(readState("cfg.partyRewards"));
-        return new SharedConfig(goal, voteRewards, partyRewards);
+        List<String> partyGlobalRewards = splitLines(readState("cfg.partyGlobalRewards"));
+        List<String> partyPlayerRewards = splitLines(readState("cfg.partyPlayerRewards"));
+        return new SharedConfig(goal, voteRewards, partyRewards, partyGlobalRewards, partyPlayerRewards);
     }
 
     private List<String> splitLines(String v) {

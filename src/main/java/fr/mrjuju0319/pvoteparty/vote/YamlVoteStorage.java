@@ -81,6 +81,8 @@ public class YamlVoteStorage implements VoteStorage {
         shared.put("goal", yaml.get("shared-config.goal"));
         shared.put("vote-rewards", yaml.getStringList("shared-config.vote-rewards"));
         shared.put("party-rewards", yaml.getStringList("shared-config.party-rewards"));
+        shared.put("party-global-rewards", yaml.getStringList("shared-config.party-global-rewards"));
+        shared.put("party-player-rewards", yaml.getStringList("shared-config.party-player-rewards"));
     }
 
     @Override
@@ -233,6 +235,8 @@ public class YamlVoteStorage implements VoteStorage {
         shared.put("goal", config.votePartyGoal());
         shared.put("vote-rewards", config.voteRewards());
         shared.put("party-rewards", config.partyRewards());
+        shared.put("party-global-rewards", config.partyGlobalRewards());
+        shared.put("party-player-rewards", config.partyPlayerRewards());
         dirty = true;
     }
 
@@ -242,7 +246,9 @@ public class YamlVoteStorage implements VoteStorage {
         Integer goal = shared.get("goal") instanceof Integer g ? g : null;
         List<String> voteRewards = (List<String>) shared.getOrDefault("vote-rewards", List.of());
         List<String> partyRewards = (List<String>) shared.getOrDefault("party-rewards", List.of());
-        return new SharedConfig(goal, voteRewards, partyRewards);
+        List<String> partyGlobalRewards = (List<String>) shared.getOrDefault("party-global-rewards", List.of());
+        List<String> partyPlayerRewards = (List<String>) shared.getOrDefault("party-player-rewards", List.of());
+        return new SharedConfig(goal, voteRewards, partyRewards, partyGlobalRewards, partyPlayerRewards);
     }
 
     @Override
@@ -265,6 +271,8 @@ public class YamlVoteStorage implements VoteStorage {
         yaml.set("shared-config.goal", shared.get("goal"));
         yaml.set("shared-config.vote-rewards", shared.getOrDefault("vote-rewards", List.of()));
         yaml.set("shared-config.party-rewards", shared.getOrDefault("party-rewards", List.of()));
+        yaml.set("shared-config.party-global-rewards", shared.getOrDefault("party-global-rewards", List.of()));
+        yaml.set("shared-config.party-player-rewards", shared.getOrDefault("party-player-rewards", List.of()));
 
         try {
             yaml.save(file);

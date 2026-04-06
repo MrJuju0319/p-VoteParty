@@ -47,6 +47,12 @@ public interface VoteStorage {
 
     void close();
 
-    record SharedConfig(Integer goal, List<String> voteRewards, List<String> partyRewards) {
+    record SharedConfig(
+            Integer goal,
+            List<String> voteRewards,
+            List<String> partyRewards,
+            List<String> partyGlobalRewards,
+            List<String> partyPlayerRewards
+    ) {
     }
 }

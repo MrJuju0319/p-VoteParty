@@ -21,6 +21,10 @@ vote:
   party-rewards:
     - "say &aVote party terminee sur {player}!"
     - "crate key giveall vote 1"
+  party-global-rewards:
+    - "broadcast &6La vote party est terminee !"
+  party-player-rewards:
+    - "[perm:group.vip] crate key give {player} vip 1"
 
 messages:
   no-online-players: "&cAucun joueur connecte sur ce serveur pour executer une commande avec {player}."
