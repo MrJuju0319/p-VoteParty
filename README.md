@@ -111,6 +111,9 @@ messages:
   - Reset ciblé: un pallier d'un joueur, tous les palliers d'un joueur, ou un pallier pour tous les joueurs.
   - `all all` = reset global de tous les palliers de tous les joueurs.
 
+- `/vp reset vote <total|days|hebdo|mois> <joueur|all>`
+  - Reset manuel des compteurs de votes (journalier / hebdo / mensuel / total) pour un joueur ou pour tous.
+
 ---
 
 ## 5) Liste complète PlaceholderAPI
@@ -122,6 +125,11 @@ Identifiant: `p-voteparty`
 - `%p-voteparty_vote_party%` → `progression/objectif`
 - `%p-voteparty_vote_vote%` → total des votes du joueur
 - `%p-voteparty_vote_total%` → total des votes du joueur (alias)
+
+Les resets automatiques de stats sont alignes sur:
+- day: chaque jour a 00:00
+- week: chaque lundi a 00:00 (ISO)
+- month: le 1er du mois a 00:00
 
 ### Stats temporelles par joueur
 

@@ -33,6 +33,10 @@ public interface VoteStorage {
 
     boolean getPallier(String playerName, String pallier);
 
+    void resetVotesForPlayer(String playerName, String period);
+
+    void resetVotesForAllPlayers(String period);
+
     void resetPallier(String playerName, String pallier);
 
     void resetAllPalliers(String playerName);

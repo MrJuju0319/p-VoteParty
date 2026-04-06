@@ -102,6 +102,11 @@ public class PcoreVoteStorage implements VoteStorage {
         return n.toLowerCase(Locale.ROOT);
     }
 
+    private String currentWeekKey(LocalDate now) {
+        WeekFields wf = WeekFields.ISO;
+        return now.get(wf.weekBasedYear()) + "-W" + now.get(wf.weekOfWeekBasedYear());
+    }
+
     @Override
     public synchronized int incrementVotes(String playerName, int amount) {
         String p = key(playerName);
@@ -113,7 +118,7 @@ public class PcoreVoteStorage implements VoteStorage {
     private void incrementStats(String player, int amount) {
         LocalDate now = LocalDate.now();
         String dayKey = now.toString();
-        String weekKey = now.getYear() + "-W" + now.get(WeekFields.ISO.weekOfWeekBasedYear());
+        String weekKey = currentWeekKey(now);
         String monthKey = now.getYear() + "-" + now.getMonthValue();
         String yearKey = String.valueOf(now.getYear());
 
@@ -177,10 +182,35 @@ public class PcoreVoteStorage implements VoteStorage {
 
     @Override
     public synchronized VotePlayerStats getStats(String playerName) {
-        List<Object> rows = queryRows("SELECT day_count,week_count,month_count,year_count,total_count FROM vp_stats WHERE player_name=?", List.of(key(playerName)));
+        String player = key(playerName);
+        normalizeStatsForPlayer(player);
+        List<Object> rows = queryRows("SELECT day_count,week_count,month_count,year_count,total_count FROM vp_stats WHERE player_name=?", List.of(player));
         if (rows.isEmpty()) return VotePlayerStats.empty();
         Object r = rows.get(0);
         return new VotePlayerStats(toInt(rowGet(r, "day_count")), toInt(rowGet(r, "week_count")), toInt(rowGet(r, "month_count")), toInt(rowGet(r, "year_count")), toInt(rowGet(r, "total_count")));
+    }
+
+    private void normalizeStatsForPlayer(String player) {
+        LocalDate now = LocalDate.now();
+        String dayKey = now.toString();
+        String weekKey = currentWeekKey(now);
+        String monthKey = now.getYear() + "-" + now.getMonthValue();
+        String yearKey = String.valueOf(now.getYear());
+
+        List<Object> rows = queryRows("SELECT day_count,week_count,month_count,year_count,total_count,day_key,week_key,month_key,year_key FROM vp_stats WHERE player_name=?", List.of(player));
+        if (rows.isEmpty()) {
+            return;
+        }
+
+        Object row = rows.get(0);
+        int day = dayKey.equals(String.valueOf(rowGet(row, "day_key"))) ? toInt(rowGet(row, "day_count")) : 0;
+        int week = weekKey.equals(String.valueOf(rowGet(row, "week_key"))) ? toInt(rowGet(row, "week_count")) : 0;
+        int month = monthKey.equals(String.valueOf(rowGet(row, "month_key"))) ? toInt(rowGet(row, "month_count")) : 0;
+        int year = yearKey.equals(String.valueOf(rowGet(row, "year_key"))) ? toInt(rowGet(row, "year_count")) : 0;
+        int total = toInt(rowGet(row, "total_count"));
+
+        exec("UPDATE vp_stats SET day_count=?,week_count=?,month_count=?,year_count=?,total_count=?,day_key=?,week_key=?,month_key=?,year_key=? WHERE player_name=?",
+                List.of(day, week, month, year, total, dayKey, weekKey, monthKey, yearKey, player));
     }
 
     @Override
@@ -236,6 +266,39 @@ public class PcoreVoteStorage implements VoteStorage {
     public synchronized boolean getPallier(String playerName, String pallier) {
         List<Object> rows = queryRows("SELECT enabled FROM vp_player_palliers WHERE player_name=? AND name=?", List.of(key(playerName), key(pallier)));
         return !rows.isEmpty() && Boolean.parseBoolean(String.valueOf(rowGet(rows.get(0), "enabled")));
+    }
+
+    @Override
+    public synchronized void resetVotesForPlayer(String playerName, String period) {
+        String player = key(playerName);
+        LocalDate now = LocalDate.now();
+        switch (period) {
+            case "day" -> exec("UPDATE vp_stats SET day_count=0, day_key=? WHERE player_name=?", List.of(now.toString(), player));
+            case "week" -> exec("UPDATE vp_stats SET week_count=0, week_key=? WHERE player_name=?", List.of(currentWeekKey(now), player));
+            case "month" -> exec("UPDATE vp_stats SET month_count=0, month_key=? WHERE player_name=?", List.of(now.getYear() + "-" + now.getMonthValue(), player));
+            case "total" -> {
+                exec("UPDATE vp_profiles SET votes=0 WHERE player_name=?", List.of(player));
+                exec("UPDATE vp_stats SET total_count=0 WHERE player_name=?", List.of(player));
+            }
+            default -> {
+            }
+        }
+    }
+
+    @Override
+    public synchronized void resetVotesForAllPlayers(String period) {
+        LocalDate now = LocalDate.now();
+        switch (period) {
+            case "day" -> exec("UPDATE vp_stats SET day_count=0, day_key=?", List.of(now.toString()));
+            case "week" -> exec("UPDATE vp_stats SET week_count=0, week_key=?", List.of(currentWeekKey(now)));
+            case "month" -> exec("UPDATE vp_stats SET month_count=0, month_key=?", List.of(now.getYear() + "-" + now.getMonthValue()));
+            case "total" -> {
+                exec("UPDATE vp_profiles SET votes=0", List.of());
+                exec("UPDATE vp_stats SET total_count=0", List.of());
+            }
+            default -> {
+            }
+        }
     }
 
     @Override

@@ -122,7 +122,11 @@ public class YamlVoteStorage implements VoteStorage {
 
     @Override
     public synchronized VotePlayerStats getStats(String playerName) {
-        return stats.getOrDefault(key(playerName), StatsState.empty()).toPublic();
+        StatsState state = stats.computeIfAbsent(key(playerName), x -> StatsState.empty());
+        if (state.normalize(LocalDate.now())) {
+            dirty = true;
+        }
+        return state.toPublic();
     }
 
     @Override
@@ -179,6 +183,31 @@ public class YamlVoteStorage implements VoteStorage {
         String player = key(playerName);
         String pal = key(pallier);
         return palliers.getOrDefault(player, Map.of()).getOrDefault(pal, false);
+    }
+
+    @Override
+    public synchronized void resetVotesForPlayer(String playerName, String period) {
+        String player = key(playerName);
+        StatsState state = stats.computeIfAbsent(player, x -> StatsState.empty());
+        state.resetPeriod(period, LocalDate.now());
+        if ("total".equals(period)) {
+            votes.put(player, 0);
+        }
+        dirty = true;
+    }
+
+    @Override
+    public synchronized void resetVotesForAllPlayers(String period) {
+        LocalDate now = LocalDate.now();
+        for (StatsState state : stats.values()) {
+            state.resetPeriod(period, now);
+        }
+        if ("total".equals(period)) {
+            for (String player : votes.keySet()) {
+                votes.put(player, 0);
+            }
+        }
+        dirty = true;
     }
 
     @Override
@@ -324,6 +353,17 @@ public class YamlVoteStorage implements VoteStorage {
 
         void increment(int value) {
             LocalDate now = LocalDate.now();
+            normalize(now);
+
+            day += value;
+            week += value;
+            month += value;
+            year += value;
+            total += value;
+        }
+
+        boolean normalize(LocalDate now) {
+            boolean changed = false;
             String d = now.toString();
             String w = weekKey(now);
             String m = now.getYear() + "-" + now.getMonthValue();
@@ -332,25 +372,44 @@ public class YamlVoteStorage implements VoteStorage {
             if (!d.equals(dayKey)) {
                 day = 0;
                 dayKey = d;
+                changed = true;
             }
             if (!w.equals(weekKey)) {
                 week = 0;
                 weekKey = w;
+                changed = true;
             }
             if (!m.equals(monthKey)) {
                 month = 0;
                 monthKey = m;
+                changed = true;
             }
             if (!y.equals(yearKey)) {
                 year = 0;
                 yearKey = y;
+                changed = true;
             }
+            return changed;
+        }
 
-            day += value;
-            week += value;
-            month += value;
-            year += value;
-            total += value;
+        void resetPeriod(String period, LocalDate now) {
+            switch (period) {
+                case "day" -> {
+                    day = 0;
+                    dayKey = now.toString();
+                }
+                case "week" -> {
+                    week = 0;
+                    weekKey = weekKey(now);
+                }
+                case "month" -> {
+                    month = 0;
+                    monthKey = now.getYear() + "-" + now.getMonthValue();
+                }
+                case "total" -> total = 0;
+                default -> {
+                }
+            }
         }
 
         VotePlayerStats toPublic() {
@@ -371,7 +430,7 @@ public class YamlVoteStorage implements VoteStorage {
 
         private static String weekKey(LocalDate now) {
             WeekFields wf = WeekFields.ISO;
-            return now.getYear() + "-W" + now.get(wf.weekOfWeekBasedYear());
+            return now.get(wf.weekBasedYear()) + "-W" + now.get(wf.weekOfWeekBasedYear());
         }
     }
 }

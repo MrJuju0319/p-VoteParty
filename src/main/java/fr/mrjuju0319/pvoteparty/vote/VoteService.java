@@ -220,12 +220,40 @@ public class VoteService {
         }
     }
 
+    public boolean resetVotes(String periodInput, String playerOrAll) {
+        String period = normalizePeriod(periodInput);
+        if (period == null) {
+            return false;
+        }
+
+        if ("all".equalsIgnoreCase(playerOrAll)) {
+            storage.resetVotesForAllPlayers(period);
+        } else {
+            storage.resetVotesForPlayer(playerOrAll, period);
+        }
+        return true;
+    }
+
     public String color(String message) {
         return message == null ? "" : message.replace('&', '§');
     }
 
     private String stripLegacyColors(String input) {
         return input == null ? "" : input.replaceAll("(?i)§[0-9A-FK-ORX]", "");
+    }
+
+    private String normalizePeriod(String input) {
+        if (input == null) {
+            return null;
+        }
+        String value = input.toLowerCase();
+        return switch (value) {
+            case "day", "days", "jour" -> "day";
+            case "week", "hebdo", "semaine" -> "week";
+            case "month", "mois", "mensuel" -> "month";
+            case "total", "totals" -> "total";
+            default -> null;
+        };
     }
 
     private PermissionCommand parsePermissionCommand(String rawCommand) {

@@ -45,6 +45,11 @@ public class MysqlVoteStorage implements VoteStorage {
         return n.toLowerCase(Locale.ROOT);
     }
 
+    private String currentWeekKey(LocalDate now) {
+        WeekFields wf = WeekFields.ISO;
+        return now.get(wf.weekBasedYear()) + "-W" + now.get(wf.weekOfWeekBasedYear());
+    }
+
     @Override
     public synchronized int incrementVotes(String playerName, int amount) {
         String player = key(playerName);
@@ -65,7 +70,7 @@ public class MysqlVoteStorage implements VoteStorage {
     private void incrementStats(String player, int amount) throws SQLException {
         LocalDate now = LocalDate.now();
         String dayKey = now.toString();
-        String weekKey = now.getYear() + "-W" + now.get(WeekFields.ISO.weekOfWeekBasedYear());
+        String weekKey = currentWeekKey(now);
         String monthKey = now.getYear() + "-" + now.getMonthValue();
         String yearKey = String.valueOf(now.getYear());
 
@@ -168,13 +173,55 @@ public class MysqlVoteStorage implements VoteStorage {
 
     @Override
     public synchronized VotePlayerStats getStats(String playerName) {
+        String player = key(playerName);
+        normalizeStatsForPlayer(player);
         try (PreparedStatement ps = connection.prepareStatement("SELECT day_count,week_count,month_count,year_count,total_count FROM vp_stats WHERE player_name=?")) {
-            ps.setString(1, key(playerName));
+            ps.setString(1, player);
             ResultSet rs = ps.executeQuery();
             if (!rs.next()) {
                 return VotePlayerStats.empty();
             }
             return new VotePlayerStats(rs.getInt(1), rs.getInt(2), rs.getInt(3), rs.getInt(4), rs.getInt(5));
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void normalizeStatsForPlayer(String player) {
+        LocalDate now = LocalDate.now();
+        String dayKey = now.toString();
+        String weekKey = currentWeekKey(now);
+        String monthKey = now.getYear() + "-" + now.getMonthValue();
+        String yearKey = String.valueOf(now.getYear());
+
+        try (PreparedStatement read = connection.prepareStatement(
+                "SELECT day_count,week_count,month_count,year_count,total_count,day_key,week_key,month_key,year_key FROM vp_stats WHERE player_name=?")) {
+            read.setString(1, player);
+            ResultSet rs = read.executeQuery();
+            if (!rs.next()) {
+                return;
+            }
+
+            int day = dayKey.equals(rs.getString("day_key")) ? rs.getInt("day_count") : 0;
+            int week = weekKey.equals(rs.getString("week_key")) ? rs.getInt("week_count") : 0;
+            int month = monthKey.equals(rs.getString("month_key")) ? rs.getInt("month_count") : 0;
+            int year = yearKey.equals(rs.getString("year_key")) ? rs.getInt("year_count") : 0;
+            int total = rs.getInt("total_count");
+
+            try (PreparedStatement ps = connection.prepareStatement(
+                    "UPDATE vp_stats SET day_count=?,week_count=?,month_count=?,year_count=?,total_count=?,day_key=?,week_key=?,month_key=?,year_key=? WHERE player_name=?")) {
+                ps.setInt(1, day);
+                ps.setInt(2, week);
+                ps.setInt(3, month);
+                ps.setInt(4, year);
+                ps.setInt(5, total);
+                ps.setString(6, dayKey);
+                ps.setString(7, weekKey);
+                ps.setString(8, monthKey);
+                ps.setString(9, yearKey);
+                ps.setString(10, player);
+                ps.executeUpdate();
+            }
         } catch (SQLException e) {
             throw new IllegalStateException(e);
         }
@@ -284,6 +331,90 @@ public class MysqlVoteStorage implements VoteStorage {
             ps.setString(2, key(pallier));
             ResultSet rs = ps.executeQuery();
             return rs.next() && rs.getBoolean(1);
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @Override
+    public synchronized void resetVotesForPlayer(String playerName, String period) {
+        String player = key(playerName);
+        LocalDate now = LocalDate.now();
+        try {
+            switch (period) {
+                case "day" -> {
+                    try (PreparedStatement ps = connection.prepareStatement("UPDATE vp_stats SET day_count=0, day_key=? WHERE player_name=?")) {
+                        ps.setString(1, now.toString());
+                        ps.setString(2, player);
+                        ps.executeUpdate();
+                    }
+                }
+                case "week" -> {
+                    try (PreparedStatement ps = connection.prepareStatement("UPDATE vp_stats SET week_count=0, week_key=? WHERE player_name=?")) {
+                        ps.setString(1, currentWeekKey(now));
+                        ps.setString(2, player);
+                        ps.executeUpdate();
+                    }
+                }
+                case "month" -> {
+                    try (PreparedStatement ps = connection.prepareStatement("UPDATE vp_stats SET month_count=0, month_key=? WHERE player_name=?")) {
+                        ps.setString(1, now.getYear() + "-" + now.getMonthValue());
+                        ps.setString(2, player);
+                        ps.executeUpdate();
+                    }
+                }
+                case "total" -> {
+                    try (PreparedStatement ps = connection.prepareStatement("UPDATE vp_profiles SET votes=0 WHERE player_name=?")) {
+                        ps.setString(1, player);
+                        ps.executeUpdate();
+                    }
+                    try (PreparedStatement ps = connection.prepareStatement("UPDATE vp_stats SET total_count=0 WHERE player_name=?")) {
+                        ps.setString(1, player);
+                        ps.executeUpdate();
+                    }
+                }
+                default -> {
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @Override
+    public synchronized void resetVotesForAllPlayers(String period) {
+        LocalDate now = LocalDate.now();
+        try {
+            switch (period) {
+                case "day" -> {
+                    try (PreparedStatement ps = connection.prepareStatement("UPDATE vp_stats SET day_count=0, day_key=?")) {
+                        ps.setString(1, now.toString());
+                        ps.executeUpdate();
+                    }
+                }
+                case "week" -> {
+                    try (PreparedStatement ps = connection.prepareStatement("UPDATE vp_stats SET week_count=0, week_key=?")) {
+                        ps.setString(1, currentWeekKey(now));
+                        ps.executeUpdate();
+                    }
+                }
+                case "month" -> {
+                    try (PreparedStatement ps = connection.prepareStatement("UPDATE vp_stats SET month_count=0, month_key=?")) {
+                        ps.setString(1, now.getYear() + "-" + now.getMonthValue());
+                        ps.executeUpdate();
+                    }
+                }
+                case "total" -> {
+                    try (PreparedStatement ps = connection.prepareStatement("UPDATE vp_profiles SET votes=0")) {
+                        ps.executeUpdate();
+                    }
+                    try (PreparedStatement ps = connection.prepareStatement("UPDATE vp_stats SET total_count=0")) {
+                        ps.executeUpdate();
+                    }
+                }
+                default -> {
+                }
+            }
         } catch (SQLException e) {
             throw new IllegalStateException(e);
         }
