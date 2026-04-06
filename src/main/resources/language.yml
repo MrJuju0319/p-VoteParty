@@ -1,5 +1,9 @@
-prefix: "&6[VoteParty]&r "
+# ==============================
+#       P-VoteParty Language
+# ==============================
+
+prefix: "&8[&6&lVoteParty&8] &7» "
 no-permission: "&cTu n'as pas la permission."
-player-only: "&cCommande reservee aux joueurs."
+player-only: "&cCette commande est reservee aux joueurs."
 vote-added: "&aVote ajoute pour &f{player}&a."
-party-triggered: "&aRewards de vote-party executes."
+party-triggered: "&aVote-party declenchee, rewards executes."

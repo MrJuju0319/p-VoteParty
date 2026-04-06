@@ -1,11 +1,22 @@
+# ==============================
+#        P-VoteParty Config
+# ==============================
+
+# Nom logique de ce serveur (utile en reseau)
 server-name: lobby-1
+
+# true = ce serveur pousse la config shared (goal/rewards)
+# false = ce serveur lit la config du master
 master: false
 
 sync:
+  # Frequence de synchronisation storage / online / pending
   interval-seconds: 5
 
 storage:
-  type: yml # yml | mysql | pcore | auto
+  # yml | mysql | pcore | auto
+  type: yml
+
   mysql:
     host: 127.0.0.1
     port: 3306
@@ -15,25 +26,26 @@ storage:
     ssl: false
 
 vote:
+  # Nombre de votes necessaires pour declencher la vote-party
   goal: 10
 
-  # Rewards donnes a chaque vote du joueur
+  # Rewards executes a chaque vote individuel
   rewards:
     - "eco give {player} 100"
 
   # (Legacy) Rewards vote-party.
-  # - Si la commande contient {player}, elle est executee pour chaque joueur en ligne.
-  # - Sinon, elle est executee une seule fois (globale).
+  # - Avec {player}: execute pour chaque joueur en ligne
+  # - Sans {player}: execute une seule fois
   party-rewards:
-    - "say &aVote party terminee sur {player}!"
+    - "say &a🎉 Vote party terminee pour {player} !"
     - "crate key giveall vote 1"
 
-  # Rewards globaux executes une seule fois a la fin de la vote-party
+  # Rewards globaux executes une seule fois
   party-global-rewards:
-    - "broadcast &6La vote party est terminee !"
+    - "broadcast &6&lVoteParty &8» &eLa vote-party est terminee !"
 
-  # Rewards par joueur executes a la fin de la vote-party
-  # Syntaxe permission optionnelle:
+  # Rewards par joueur (permission optionnelle)
+  # Format:
   #   [perm:permission.node] <commande>
   # Exemple:
   #   [perm:group.vip] crate key give {player} vip 1
@@ -41,4 +53,6 @@ vote:
     - "[perm:group.vip] crate key give {player} vip 1"
 
 messages:
-  no-online-players: "&cAucun joueur connecte sur ce serveur pour executer une commande avec {player}."
+  # Affiche dans la console si une commande necessite {player}
+  # mais qu'aucun joueur n'est connecte.
+  no-online-players: "&cAucun joueur connecte pour executer cette action avec {player}."
