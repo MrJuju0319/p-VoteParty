@@ -104,7 +104,7 @@ messages:
 - `/vp party`
   - Déclenche immédiatement les rewards de vote-party.
 
-- `/vp setpallier <joueur> <pallier> <true|false>`
+- `/vp setpallier <pallier> <true|false> <joueur>`
   - Définit l'état d'un pallier pour un joueur précis.
 
 - `/vp reset pallier <joueur|all> <pallier|all>`
