@@ -15,6 +15,8 @@ import org.bukkit.entity.Player;
 
 public class VoteCommand implements CommandExecutor, TabCompleter {
 
+    private static final String PREFIX = "&8[&6&lVoteParty&8] &7» ";
+
     private final PVotePartyPlugin plugin;
     private final VoteService voteService;
 
@@ -30,13 +32,23 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
                 sendHelp(sender);
                 return true;
             }
-            sender.sendMessage(voteService.color("&aVotes personnels: &f" + voteService.getVotes(player.getName())));
-            sender.sendMessage(voteService.color("&aProgression vote-party: &f" + voteService.getPartyProgress() + "&7/&f" + voteService.getPartyGoal()));
+
+            int votes = voteService.getVotes(player.getName());
+            int progress = voteService.getPartyProgress();
+            int goal = voteService.getPartyGoal();
+            int percent = Math.max(0, Math.min(100, (int) Math.round((progress * 100.0) / Math.max(1, goal))));
+
+            sender.sendMessage(voteService.color("&8&m--------------------------------------------------"));
+            sender.sendMessage(voteService.color("&6&lVoteParty &8• &7Statistiques de &f" + player.getName()));
+            sender.sendMessage(voteService.color("&7- &fVotes personnels: &a" + votes));
+            sender.sendMessage(voteService.color("&7- &fProgression globale: &e" + progress + "&7/&6" + goal + " &8(&f" + percent + "%&8)"));
+            sender.sendMessage(voteService.color("&7- &fObjectif restant: &c" + Math.max(0, goal - progress)));
+            sender.sendMessage(voteService.color("&8&m--------------------------------------------------"));
             return true;
         }
 
         if (!sender.hasPermission("p-voteparty.vote.admin")) {
-            sender.sendMessage(voteService.color("&cTu n'as pas la permission."));
+            info(sender, "&cTu n'as pas la permission pour cette commande.");
             return true;
         }
 
@@ -49,7 +61,7 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             plugin.reloadConfig();
             VoteConfig updated = VoteConfig.fromConfig(plugin.getConfig());
             voteService.reloadFromConfig(updated);
-            sender.sendMessage(voteService.color("&aConfiguration rechargee avec succes."));
+            info(sender, "&aConfiguration rechargee avec succes.");
             return true;
         }
 
@@ -58,12 +70,12 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             try {
                 amount = Math.max(1, Integer.parseInt(args[2]));
             } catch (NumberFormatException e) {
-                sender.sendMessage(voteService.color("&cNombre de vote invalide."));
+                info(sender, "&cNombre de votes invalide. Exemple: &f/vp add vote 3 Steve");
                 return true;
             }
             String targetName = args[3];
             voteService.addVote(targetName, amount);
-            sender.sendMessage(voteService.color("&a" + amount + " vote(s) ajoute(s) pour &f" + targetName));
+            info(sender, "&aAjout de &f" + amount + "&a vote(s) pour &f" + targetName + "&a.");
             return true;
         }
 
@@ -71,12 +83,12 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             String targetName = args[1];
             String pallier = args[2];
             if (!args[3].equalsIgnoreCase("true") && !args[3].equalsIgnoreCase("false")) {
-                sender.sendMessage(voteService.color("&cValeur invalide: utilise true ou false."));
+                info(sender, "&cValeur invalide: utilise &ftrue &cou &ffalse&c.");
                 return true;
             }
             boolean value = Boolean.parseBoolean(args[3]);
             voteService.setPallier(targetName, pallier, value);
-            sender.sendMessage(voteService.color("&aPallier &f" + pallier + " &apour &f" + targetName + " &aset a &f" + value));
+            info(sender, "&aPallier &f" + pallier + " &amodifie pour &f" + targetName + "&a -> &f" + value + "&a.");
             return true;
         }
 
@@ -84,7 +96,7 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             String targetName = args[2];
             String pallier = args[3];
             voteService.resetPallier(targetName, pallier);
-            sender.sendMessage(voteService.color("&aPallier reset pour &f" + targetName + "&a: &f" + pallier));
+            info(sender, "&aReset pallier applique pour &f" + targetName + "&a: &f" + pallier + "&a.");
             return true;
         }
 
@@ -92,16 +104,16 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
             String period = args[2];
             String targetName = args[3];
             if (!voteService.resetVotes(period, targetName)) {
-                sender.sendMessage(voteService.color("&cType de reset invalide. Utilise: total/days/hebdo/mois."));
+                info(sender, "&cType invalide. Utilise: &ftotal&7/&fdays&7/&fhebdo&7/&fmois");
                 return true;
             }
-            sender.sendMessage(voteService.color("&aVotes reset (&f" + period + "&a) pour &f" + targetName));
+            info(sender, "&aVotes reset (&f" + period + "&a) pour &f" + targetName + "&a.");
             return true;
         }
 
         if (args[0].equalsIgnoreCase("party")) {
             voteService.triggerPartyRewards();
-            sender.sendMessage(voteService.color("&aRewards de vote-party executes."));
+            info(sender, "&aVote-party declenchee, rewards executes.");
             return true;
         }
 
@@ -147,17 +159,21 @@ public class VoteCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage(voteService.color("&6&m--------------------&r &e&lP-VoteParty &6&m--------------------"));
-        sender.sendMessage(voteService.color("&e/vp"));
-        sender.sendMessage(voteService.color("&7  Affiche tes stats perso + progression vote-party."));
+        sender.sendMessage(voteService.color("&8&m------------------&r &6&lP-VoteParty &8&m------------------"));
+        sender.sendMessage(voteService.color("&e/vp &8- &7Affiche les stats et la progression."));
         sender.sendMessage("");
-        sender.sendMessage(voteService.color("&e/vp reload"));
-        sender.sendMessage(voteService.color("&e/vp party"));
-        sender.sendMessage(voteService.color("&e/vp add vote <nombre> <joueur>"));
+        sender.sendMessage(voteService.color("&6&lAdministration"));
+        sender.sendMessage(voteService.color("&e/vp reload &8- &7Recharge la configuration"));
+        sender.sendMessage(voteService.color("&e/vp party &8- &7Declenche la vote-party"));
+        sender.sendMessage(voteService.color("&e/vp add vote <nombre> <joueur> &8- &7Ajoute des votes"));
         sender.sendMessage(voteService.color("&e/vp setpallier <joueur> <pallier> <true|false>"));
         sender.sendMessage(voteService.color("&e/vp reset pallier <joueur|all> <pallier|all>"));
         sender.sendMessage(voteService.color("&e/vp reset vote <total|days|hebdo|mois> <joueur|all>"));
-        sender.sendMessage(voteService.color("&6&m-------------------------------------------------------"));
+        sender.sendMessage(voteService.color("&8&m-------------------------------------------------------"));
+    }
+
+    private void info(CommandSender sender, String message) {
+        sender.sendMessage(voteService.color(PREFIX + message));
     }
 
     private List<String> completePlayers(String input, boolean includeAll) {
