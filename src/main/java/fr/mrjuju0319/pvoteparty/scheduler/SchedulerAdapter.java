@@ -28,4 +28,23 @@ public final class SchedulerAdapter {
 
         Bukkit.getScheduler().runTaskTimer(plugin, runnable, delayTicks, periodTicks);
     }
+
+    public static void runLater(Plugin plugin, Runnable runnable, long delayTicks) {
+        try {
+            Method globalSchedulerMethod = Bukkit.class.getMethod("getGlobalRegionScheduler");
+            Object globalScheduler = globalSchedulerMethod.invoke(null);
+            Method runDelayed = globalScheduler.getClass().getMethod(
+                    "runDelayed",
+                    Plugin.class,
+                    java.util.function.Consumer.class,
+                    long.class
+            );
+            runDelayed.invoke(globalScheduler, plugin, (java.util.function.Consumer<Object>) task -> runnable.run(), delayTicks);
+            return;
+        } catch (Exception ignored) {
+            // fallback Paper/Spigot
+        }
+
+        Bukkit.getScheduler().runTaskLater(plugin, runnable, delayTicks);
+    }
 }

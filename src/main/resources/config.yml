@@ -16,11 +16,29 @@ storage:
 
 vote:
   goal: 10
+
+  # Rewards donnes a chaque vote du joueur
   rewards:
     - "eco give {player} 100"
+
+  # (Legacy) Rewards vote-party.
+  # - Si la commande contient {player}, elle est executee pour chaque joueur en ligne.
+  # - Sinon, elle est executee une seule fois (globale).
   party-rewards:
     - "say &aVote party terminee sur {player}!"
     - "crate key giveall vote 1"
+
+  # Rewards globaux executes une seule fois a la fin de la vote-party
+  party-global-rewards:
+    - "broadcast &6La vote party est terminee !"
+
+  # Rewards par joueur executes a la fin de la vote-party
+  # Syntaxe permission optionnelle:
+  #   [perm:permission.node] <commande>
+  # Exemple:
+  #   [perm:group.vip] crate key give {player} vip 1
+  party-player-rewards:
+    - "[perm:group.vip] crate key give {player} vip 1"
 
 messages:
   no-online-players: "&cAucun joueur connecte sur ce serveur pour executer une commande avec {player}."

@@ -27,11 +27,17 @@ public interface VoteStorage {
 
     String getOnlineServer(String playerName);
 
+    List<String> getOnlinePlayers();
+
     Map<String, Integer> topVotes(int limit);
 
     void setPallier(String playerName, String pallier, boolean value);
 
     boolean getPallier(String playerName, String pallier);
+
+    void resetVotesForPlayer(String playerName, String period);
+
+    void resetVotesForAllPlayers(String period);
 
     void resetPallier(String playerName, String pallier);
 
@@ -47,6 +53,12 @@ public interface VoteStorage {
 
     void close();
 
-    record SharedConfig(Integer goal, List<String> voteRewards, List<String> partyRewards) {
+    record SharedConfig(
+            Integer goal,
+            List<String> voteRewards,
+            List<String> partyRewards,
+            List<String> partyGlobalRewards,
+            List<String> partyPlayerRewards
+    ) {
     }
 }

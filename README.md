@@ -66,6 +66,10 @@ vote:
   party-rewards:
     - "say &aVote party terminee sur {player}!"
     - "crate key giveall vote 1"
+  party-global-rewards:
+    - "broadcast &6La vote party est terminee !"
+  party-player-rewards:
+    - "[perm:group.vip] crate key give {player} vip 1"
 
 messages:
   no-online-players: "&cAucun joueur connecte sur ce serveur pour executer une commande avec {player}."
@@ -73,7 +77,7 @@ messages:
 
 ### Options importantes
 
-- `master: true` : ce serveur publie `goal`, `rewards`, `party-rewards` dans le storage partagé.
+- `master: true` : ce serveur publie `goal`, `rewards`, `party-rewards`, `party-global-rewards`, `party-player-rewards` dans le storage partagé.
 - `master: false` : ce serveur consomme la config publiée par le master.
 - `sync.interval-seconds` : fréquence de heartbeat/synchronisation.
 
@@ -89,7 +93,7 @@ messages:
 ### Commandes admin (`p-voteparty.vote.admin`)
 
 - `/vp reload`
-  - Recharge `config.yml` à chaud (goal, rewards, party-rewards, mode master).
+  - Recharge `config.yml` à chaud (goal, rewards, party-rewards, party-global-rewards, party-player-rewards, mode master).
   - Ne recrée pas le backend de stockage actif (si vous changez `storage.type`, redémarrez le serveur).
 
 - `/vp add vote <nombre> <joueur>`
@@ -107,6 +111,9 @@ messages:
   - Reset ciblé: un pallier d'un joueur, tous les palliers d'un joueur, ou un pallier pour tous les joueurs.
   - `all all` = reset global de tous les palliers de tous les joueurs.
 
+- `/vp reset vote <total|days|hebdo|mois> <joueur|all>`
+  - Reset manuel des compteurs de votes (journalier / hebdo / mensuel / total) pour un joueur ou pour tous.
+
 ---
 
 ## 5) Liste complète PlaceholderAPI
@@ -118,6 +125,11 @@ Identifiant: `p-voteparty`
 - `%p-voteparty_vote_party%` → `progression/objectif`
 - `%p-voteparty_vote_vote%` → total des votes du joueur
 - `%p-voteparty_vote_total%` → total des votes du joueur (alias)
+
+Les resets automatiques de stats sont alignes sur:
+- day: chaque jour a 00:00
+- week: chaque lundi a 00:00 (ISO)
+- month: le 1er du mois a 00:00
 
 ### Stats temporelles par joueur
 
@@ -200,6 +212,7 @@ Sur un environnement sans accès internet, installez manuellement Java 21 puis r
 ## 10) Résumé rapide des variables
 
 - Variable commandes config: `{player}`
+- Préfixe permission optionnel pour `vote.party-player-rewards`: `[perm:permission.node] <commande>`
 - Placeholder pallier: `%p-voteparty_pallier_<X>%` (état par joueur)
 - Placeholders vote: 
   - `%p-voteparty_vote_party%`

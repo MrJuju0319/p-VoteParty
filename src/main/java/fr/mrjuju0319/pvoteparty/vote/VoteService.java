@@ -1,6 +1,8 @@
 package fr.mrjuju0319.pvoteparty.vote;
 
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -16,6 +18,8 @@ public class VoteService {
     private int votePartyGoal;
     private List<String> voteRewards;
     private List<String> partyRewards;
+    private List<String> partyGlobalRewards;
+    private List<String> partyPlayerRewards;
 
     public VoteService(JavaPlugin plugin, VoteConfig config, VoteStorage storage) {
         this.plugin = plugin;
@@ -26,11 +30,25 @@ public class VoteService {
         this.votePartyGoal = config.votePartyGoal();
         this.voteRewards = config.voteRewards();
         this.partyRewards = config.partyRewards();
+        this.partyGlobalRewards = config.partyGlobalRewards();
+        this.partyPlayerRewards = config.partyPlayerRewards();
     }
 
     public void initializeRuntimeConfig() {
         if (master) {
-            storage.upsertSharedConfig(new VoteConfig(serverName, votePartyGoal, voteRewards, partyRewards, noOnlinePlayersMessage, "", null, true, 5));
+            storage.upsertSharedConfig(new VoteConfig(
+                    serverName,
+                    votePartyGoal,
+                    voteRewards,
+                    partyRewards,
+                    partyGlobalRewards,
+                    partyPlayerRewards,
+                    noOnlinePlayersMessage,
+                    "",
+                    null,
+                    true,
+                    5
+            ));
         } else {
             applySharedConfig();
         }
@@ -47,6 +65,12 @@ public class VoteService {
         if (!shared.partyRewards().isEmpty()) {
             partyRewards = shared.partyRewards();
         }
+        if (!shared.partyGlobalRewards().isEmpty()) {
+            partyGlobalRewards = shared.partyGlobalRewards();
+        }
+        if (!shared.partyPlayerRewards().isEmpty()) {
+            partyPlayerRewards = shared.partyPlayerRewards();
+        }
     }
 
     public void reloadFromConfig(VoteConfig config) {
@@ -56,6 +80,8 @@ public class VoteService {
         this.votePartyGoal = config.votePartyGoal();
         this.voteRewards = config.voteRewards();
         this.partyRewards = config.partyRewards();
+        this.partyGlobalRewards = config.partyGlobalRewards();
+        this.partyPlayerRewards = config.partyPlayerRewards();
 
         if (master) {
             storage.upsertSharedConfig(config);
@@ -85,11 +111,34 @@ public class VoteService {
     }
 
     public void triggerPartyRewards() {
+        for (String command : partyGlobalRewards) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        }
+
+        for (String command : partyPlayerRewards) {
+            dispatchPartyPlayerCommandWithPermission(command);
+        }
+
         for (String command : partyRewards) {
             if (command.contains("{player}")) {
                 dispatchPartyPlayerCommand(command);
             } else {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+            }
+        }
+    }
+
+    public void dispatchPartyPlayerCommandWithPermission(String rawCommand) {
+        PermissionCommand permissionCommand = parsePermissionCommand(rawCommand);
+        String command = permissionCommand.command();
+        if (!command.contains("{player}")) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+            return;
+        }
+
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (permissionCommand.permission() == null || online.hasPermission(permissionCommand.permission())) {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("{player}", online.getName()));
             }
         }
     }
@@ -136,6 +185,15 @@ public class VoteService {
         storage.clearOnlineServer(playerName, serverName);
     }
 
+    public List<String> getKnownOnlinePlayers() {
+        Set<String> names = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        names.addAll(storage.getOnlinePlayers());
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            names.add(player.getName());
+        }
+        return List.copyOf(names);
+    }
+
     public int getVotes(String playerName) {
         return storage.getVotes(playerName);
     }
@@ -173,12 +231,66 @@ public class VoteService {
         }
     }
 
+    public boolean resetVotes(String periodInput, String playerOrAll) {
+        String period = normalizePeriod(periodInput);
+        if (period == null) {
+            return false;
+        }
+
+        if ("all".equalsIgnoreCase(playerOrAll)) {
+            storage.resetVotesForAllPlayers(period);
+        } else {
+            storage.resetVotesForPlayer(playerOrAll, period);
+        }
+        return true;
+    }
+
     public String color(String message) {
         return message == null ? "" : message.replace('&', '§');
     }
 
     private String stripLegacyColors(String input) {
         return input == null ? "" : input.replaceAll("(?i)§[0-9A-FK-ORX]", "");
+    }
+
+    private String normalizePeriod(String input) {
+        if (input == null) {
+            return null;
+        }
+        String value = input.toLowerCase();
+        return switch (value) {
+            case "day", "days", "jour" -> "day";
+            case "week", "hebdo", "semaine" -> "week";
+            case "month", "mois", "mensuel" -> "month";
+            case "total", "totals" -> "total";
+            default -> null;
+        };
+    }
+
+    private PermissionCommand parsePermissionCommand(String rawCommand) {
+        if (rawCommand == null) {
+            return new PermissionCommand(null, "");
+        }
+
+        String trimmed = rawCommand.trim();
+        if (!trimmed.startsWith("[perm:")) {
+            return new PermissionCommand(null, trimmed);
+        }
+
+        int end = trimmed.indexOf(']');
+        if (end <= 6) {
+            return new PermissionCommand(null, trimmed);
+        }
+
+        String permission = trimmed.substring(6, end).trim();
+        String command = trimmed.substring(end + 1).trim();
+        if (permission.isEmpty()) {
+            return new PermissionCommand(null, command);
+        }
+        return new PermissionCommand(permission, command);
+    }
+
+    private record PermissionCommand(String permission, String command) {
     }
 
     public void tickSync(boolean pullSharedConfig) {
